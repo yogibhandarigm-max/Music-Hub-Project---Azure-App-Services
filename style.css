@@ -369,6 +369,33 @@ body {
     margin-bottom: 32px;
 }
 
+.trending-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.refresh-btn {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
+    color: #000;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.refresh-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.last-updated {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
 .section-header h3 {
     font-size: 32px;
     font-weight: 700;

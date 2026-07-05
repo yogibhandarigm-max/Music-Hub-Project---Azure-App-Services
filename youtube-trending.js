@@ -4,6 +4,8 @@
     // `YOUTUBE_SYNC_INTERVAL_MINUTES` (integer) for refresh frequency.
     const API_KEY = window.YOUTUBE_API_KEY || null;
     const TARGET = document.getElementById('trending-list');
+    const REFRESH_BTN = document.getElementById('trending-refresh');
+    const UPDATED_EL = document.getElementById('trending-updated');
     const MAX = 12;
     const INTERVAL_MIN = (window.YOUTUBE_SYNC_INTERVAL_MINUTES && Number(window.YOUTUBE_SYNC_INTERVAL_MINUTES)) || 10; // minutes
 
@@ -35,8 +37,11 @@
 
     async function fetchTrending(){
         if(!TARGET) return;
-        if(!API_KEY){
-            showMessage('YouTube API key not found. See config.example.js to configure.');
+        // If API key isn't configured, silently return and keep the static/fallback items
+        if(!API_KEY || API_KEY === 'YOUR_KEY_HERE'){
+            console.warn('YouTube API key not configured; leaving static trending items in place.');
+            // update timestamp to indicate static content
+            if(UPDATED_EL) UPDATED_EL.textContent = 'Last updated: static content';
             return;
         }
 
@@ -61,14 +66,30 @@
 
             const cards = items.map(createCard).join('\n');
             TARGET.innerHTML = cards;
+            if(UPDATED_EL) UPDATED_EL.textContent = 'Last updated: ' + new Date().toLocaleString();
         }catch(err){
             console.error(err);
             showMessage('Failed to fetch YouTube trending: ' + err.message);
         }
     }
 
-    // Expose fetch function for manual trigger if needed
+    // Expose fetch function for manual trigger and wire up button
     window.fetchYouTubeTrending = fetchTrending;
+    if(REFRESH_BTN){
+        REFRESH_BTN.addEventListener('click', async function(){
+            try{
+                REFRESH_BTN.disabled = true;
+                const original = REFRESH_BTN.textContent;
+                REFRESH_BTN.textContent = 'Refreshing...';
+                await fetchTrending();
+                REFRESH_BTN.textContent = original;
+            }catch(e){
+                console.error(e);
+            }finally{
+                REFRESH_BTN.disabled = false;
+            }
+        });
+    }
 
     // Run on load and schedule interval refresh
     function start(){
