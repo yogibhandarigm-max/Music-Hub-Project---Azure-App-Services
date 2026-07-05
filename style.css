@@ -16,10 +16,37 @@
     --accent-2: #2a2a2a;
     --border-radius: 8px;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --header-height: 220px;
 }
 
 html {
     scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--header-height) + 16px);
+}
+
+/* Strong, high-priority layout fixes to ensure header stays above everything */
+html, body {
+    height: 100%;
+}
+
+/* Force header to top and highest stacking to avoid accidental overlap */
+.header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 2147483647 !important;
+    outline: none;
+}
+
+/* Make main sections sit below the header stack */
+.hero-section,
+.content-section,
+.featured-artists,
+.cta-section,
+.footer {
+    position: relative !important;
+    z-index: 0 !important;
 }
 
 body {
@@ -27,7 +54,8 @@ body {
     background-color: var(--secondary-color);
     color: var(--text-primary);
     overflow-x: hidden;
-    padding-top: 65px;
+    /* reserve space equal to header height so fixed header doesn't overlap content */
+    padding-top: var(--header-height);
 }
 
 /* ===== HEADER/NAVIGATION ===== */
@@ -36,12 +64,16 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    z-index: 1000;
-    background: linear-gradient(180deg, rgba(25, 20, 20, 0.95) 0%, rgba(25, 20, 20, 0.8) 100%);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    z-index: 9999;
+    background-color: #0f0f0f; /* slightly darker to separate from page */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     padding: 12px 0;
     width: 100%;
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    overflow: visible;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
 }
 
 .header-container {
@@ -49,8 +81,12 @@ body {
     margin: 0 auto;
     display: flex;
     align-items: center;
-    gap: 30px;
+    justify-content: space-between;
+    gap: 20px;
     padding: 0 20px;
+    width: 100%;
+    height: 100%;
+    flex-wrap: nowrap; /* prevent wrapping into multiple rows */
 }
 
 .logo-section {
@@ -189,6 +225,13 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     padding: 20px 20px;
+    position: relative;
+    z-index: 1;
+}
+
+/* ensure hero always starts below the fixed header */
+.hero-section {
+    margin-top: calc(var(--header-height) + 8px);
 }
 
 .hero-content {
@@ -315,6 +358,8 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     padding: 60px 20px;
+    position: relative;
+    z-index: 1;
 }
 
 .section-header {
