@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - MusicHub</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo"><a href="index.html">🎵 MusicHub</a></div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="browse.html" class="btn-login">Browse Music</a></li>
+                <li><a href="dashboard.html" class="btn-login active">Dashboard</a></li>
+                <li><a href="#" onclick="logout()" class="btn-signup">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="dashboard-section">
+        <div class="container">
+            <div class="dashboard-header">
+                <h1>Welcome, <span id="userName">User</span>! 🎵</h1>
+                <p>What would you like to do today?</p>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="dashboard-icon">🎧</div>
+                    <h2>Browse Music</h2>
+                    <p>Discover Hollywood and Bollywood songs by genre and artist</p>
+                    <a href="browse.html" class="btn btn-primary">Start Browsing</a>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="dashboard-icon">❤️</div>
+                    <h2>My Favorites</h2>
+                    <p>Access your saved and favorite songs</p>
+                    <a href="#" class="btn btn-primary">View Favorites</a>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="dashboard-icon">🎤</div>
+                    <h2>My Playlists</h2>
+                    <p>Create and manage your custom playlists</p>
+                    <a href="#" class="btn btn-primary">My Playlists</a>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="dashboard-icon">📊</div>
+                    <h2>Statistics</h2>
+                    <p>View your listening history and analytics</p>
+                    <a href="#" class="btn btn-primary">View Stats</a>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="dashboard-icon">👤</div>
+                    <h2>Profile</h2>
+                    <p>Update your profile and preferences</p>
+                    <a href="#" class="btn btn-primary">Edit Profile</a>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="dashboard-icon">⚙️</div>
+                    <h2>Settings</h2>
+                    <p>Manage your account settings and privacy</p>
+                    <a href="#" class="btn btn-primary">Settings</a>
+                </div>
+            </div>
+
+            <div class="quick-access">
+                <h3>Quick Access - Popular Artists</h3>
+                <div class="artist-quick-grid">
+                    <div class="quick-artist">
+                        <span class="quick-icon">🎬</span>
+                        <p>The Weeknd</p>
+                    </div>
+                    <div class="quick-artist">
+                        <span class="quick-icon">🎤</span>
+                        <p>Taylor Swift</p>
+                    </div>
+                    <div class="quick-artist">
+                        <span class="quick-icon">🎵</span>
+                        <p>Arijit Singh</p>
+                    </div>
+                    <div class="quick-artist">
+                        <span class="quick-icon">🌟</span>
+                        <p>Dua Lipa</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 MusicHub. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        // Load user name from localStorage
+        window.addEventListener('DOMContentLoaded', function() {
+            const userEmail = localStorage.getItem('userEmail');
+            const userName = localStorage.getItem('userName');
+            
+            if (!userEmail) {
+                // Redirect to login if not logged in
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Display user name
+            if (userName) {
+                document.getElementById('userName').textContent = userName;
+            } else if (userEmail) {
+                document.getElementById('userName').textContent = userEmail.split('@')[0];
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('isLoggedIn');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

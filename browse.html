@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Music - MusicHub</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo"><a href="index.html">🎵 MusicHub</a></div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="browse.html" class="btn-login active">Browse Music</a></li>
+                <li><a href="dashboard.html" class="btn-login">Dashboard</a></li>
+                <li><a href="#" onclick="logout()" class="btn-signup">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="browse-section">
+        <div class="container">
+            <h1>Browse Music</h1>
+            <p class="browse-subtitle">Choose your favorite music from Hollywood and Bollywood</p>
+
+            <!-- Category Selection -->
+            <div class="browse-step" id="step1">
+                <h2>Step 1: Choose Music Type</h2>
+                <div class="category-grid">
+                    <div class="category-card" onclick="selectCategory('hollywood')">
+                        <div class="category-icon">🎬</div>
+                        <h3>Hollywood</h3>
+                        <p>English & International Music</p>
+                    </div>
+                    <div class="category-card" onclick="selectCategory('bollywood')">
+                        <div class="category-icon">🎭</div>
+                        <h3>Bollywood</h3>
+                        <p>Hindi & Indian Music</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Genre Selection -->
+            <div class="browse-step" id="step2" style="display: none;">
+                <div class="step-header">
+                    <button class="btn btn-back" onclick="backToStep(1)">← Back</button>
+                    <h2>Step 2: Choose Genre</h2>
+                </div>
+                <div class="genre-grid" id="genreGrid"></div>
+            </div>
+
+            <!-- Artist Selection -->
+            <div class="browse-step" id="step3" style="display: none;">
+                <div class="step-header">
+                    <button class="btn btn-back" onclick="backToStep(2)">← Back</button>
+                    <h2>Step 3: Choose Artist</h2>
+                </div>
+                <div class="artist-grid" id="artistGrid"></div>
+            </div>
+
+            <!-- Song Selection -->
+            <div class="browse-step" id="step4" style="display: none;">
+                <div class="step-header">
+                    <button class="btn btn-back" onclick="backToStep(3)">← Back</button>
+                    <h2>Step 4: Choose Songs</h2>
+                </div>
+                <div class="songs-list" id="songsList"></div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 MusicHub. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+        </div>
+    </footer>
+
+    <script src="browse-script.js"></script>
+    <script>
+        function logout() {
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('isLoggedIn');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoundWave - Stream Your Music</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Fixed Header/Navigation -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo-section">
+                <h1 class="logo">
+                    <i class="fas fa-wave-square"></i> SoundWave
+                </h1>
+            </div>
+            
+            <div class="search-section">
+                <input type="text" class="search-input" placeholder="Search songs, artists, albums...">
+                <button class="search-btn"><i class="fas fa-search"></i></button>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#" class="nav-link active">Home</a>
+                <a href="#trending" class="nav-link">Trending</a>
+                <a href="#genres" class="nav-link">Genres</a>
+                <a href="#podcasts" class="nav-link">Podcasts</a>
+            </nav>
+
+            <div class="auth-section">
+                <a href="login.html" class="btn-text">Login</a>
+                <a href="signup.html" class="btn-primary">Sign Up Free</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h2>Your Music, Your Way</h2>
+                <p>Discover millions of songs from your favorite artists</p>
+                <div class="hero-buttons">
+                    <a href="signup.html" class="btn btn-large btn-gradient">Start Free Trial</a>
+                    <a href="#trending" class="btn btn-large btn-outline">Explore Music</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="floating-card card-1">
+                    <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300&h=300&fit=crop" alt="Featured">
+                </div>
+                <div class="floating-card card-2">
+                    <img src="https://images.unsplash.com/photo-1511379938547-c1f69b13d835?w=300&h=300&fit=crop" alt="Featured">
+                </div>
+                <div class="floating-card card-3">
+                    <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop" alt="Featured">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trending Now Section -->
+    <section id="trending" class="content-section">
+        <div class="section-header">
+            <h3>Trending Now</h3>
+            <a href="#" class="view-all">View All →</a>
+        </div>
+        <div class="horizontal-scroll">
+            <div class="scroll-container">
+                <div class="song-card">
+                    <div class="song-image">
+                        <img src="https://images.unsplash.com/photo-1511379938547-c1f69b13d835?w=200&h=200&fit=crop" alt="Song 1">
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                    <h4>Blinding Lights</h4>
+                    <p>The Weeknd</p>
+                </div>
+                <div class="song-card">
+                    <div class="song-image">
+                        <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200&h=200&fit=crop" alt="Song 2">
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                    <h4>Anti-Hero</h4>
+                    <p>Taylor Swift</p>
+                </div>
+                <div class="song-card">
+                    <div class="song-image">
+                        <img src="https://images.unsplash.com/photo-1516575334481-f410a11e6dba?w=200&h=200&fit=crop" alt="Song 3">
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                    <h4>Tum Hi Ho</h4>
+                    <p>Arijit Singh</p>
+                </div>
+                <div class="song-card">
+                    <div class="song-image">
+                        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop" alt="Song 4">
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                    <h4>Lut Gaya</h4>
+                    <p>Jubin Nautiyal</p>
+                </div>
+                <div class="song-card">
+                    <div class="song-image">
+                        <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200&h=200&fit=crop" alt="Song 5">
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                    <h4>Break My Heart</h4>
+                    <p>Dua Lipa</p>
+                </div>
+                <div class="song-card">
+                    <div class="song-image">
+                        <img src="https://images.unsplash.com/photo-1511674182-9f0d26f8c2e9?w=200&h=200&fit=crop" alt="Song 6">
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                    <h4>Baatein Karo</h4>
+                    <p>Shreya Ghoshal</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Top Charts Section -->
+    <section id="charts" class="content-section">
+        <div class="section-header">
+            <h3>Top Charts</h3>
+            <a href="#" class="view-all">View All →</a>
+        </div>
+        <div class="charts-grid">
+            <div class="chart-item">
+                <div class="chart-rank">1</div>
+                <div class="chart-image">
+                    <img src="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=150&h=150&fit=crop" alt="Chart 1">
+                </div>
+                <div class="chart-info">
+                    <h4>Sunroof</h4>
+                    <p>Nicky Youre</p>
+                    <span class="chart-badge">↑ 2</span>
+                </div>
+            </div>
+            <div class="chart-item">
+                <div class="chart-rank">2</div>
+                <div class="chart-image">
+                    <img src="https://images.unsplash.com/photo-1527180182-50aed528f22d?w=150&h=150&fit=crop" alt="Chart 2">
+                </div>
+                <div class="chart-info">
+                    <h4>Flowers</h4>
+                    <p>Miley Cyrus</p>
+                    <span class="chart-badge">↓ 1</span>
+                </div>
+            </div>
+            <div class="chart-item">
+                <div class="chart-rank">3</div>
+                <div class="chart-image">
+                    <img src="https://images.unsplash.com/photo-1534777412168-442b510d52af?w=150&h=150&fit=crop" alt="Chart 3">
+                </div>
+                <div class="chart-info">
+                    <h4>Shape of You</h4>
+                    <p>Ed Sheeran</p>
+                    <span class="chart-badge">→</span>
+                </div>
+            </div>
+            <div class="chart-item">
+                <div class="chart-rank">4</div>
+                <div class="chart-image">
+                    <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&h=150&fit=crop" alt="Chart 4">
+                </div>
+                <div class="chart-info">
+                    <h4>Levitating</h4>
+                    <p>Dua Lipa</p>
+                    <span class="chart-badge">↑ 3</span>
+                </div>
+            </div>
+            <div class="chart-item">
+                <div class="chart-rank">5</div>
+                <div class="chart-image">
+                    <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&h=150&fit=crop" alt="Chart 5">
+                </div>
+                <div class="chart-info">
+                    <h4>Unstoppable</h4>
+                    <p>Sia</p>
+                    <span class="chart-badge">↑ 5</span>
+                </div>
+            </div>
+            <div class="chart-item">
+                <div class="chart-rank">6</div>
+                <div class="chart-image">
+                    <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=150&h=150&fit=crop" alt="Chart 6">
+                </div>
+                <div class="chart-info">
+                    <h4>Perfect</h4>
+                    <p>Ed Sheeran</p>
+                    <span class="chart-badge">↓ 2</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Genres Section -->
+    <section id="genres" class="content-section">
+        <div class="section-header">
+            <h3>Explore Genres</h3>
+            <a href="#" class="view-all">View All →</a>
+        </div>
+        <div class="genres-grid">
+            <div class="genre-card">
+                <div class="genre-bg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <h4>Pop</h4>
+                    <i class="fas fa-music"></i>
+                </div>
+            </div>
+            <div class="genre-card">
+                <div class="genre-bg" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <h4>Bollywood</h4>
+                    <i class="fas fa-heart"></i>
+                </div>
+            </div>
+            <div class="genre-card">
+                <div class="genre-bg" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <h4>Hip Hop</h4>
+                    <i class="fas fa-microphone"></i>
+                </div>
+            </div>
+            <div class="genre-card">
+                <div class="genre-bg" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                    <h4>Electronic</h4>
+                    <i class="fas fa-compact-disc"></i>
+                </div>
+            </div>
+            <div class="genre-card">
+                <div class="genre-bg" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                    <h4>Indie</h4>
+                    <i class="fas fa-guitar"></i>
+                </div>
+            </div>
+            <div class="genre-card">
+                <div class="genre-bg" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
+                    <h4>Classical</h4>
+                    <i class="fas fa-violin"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Podcasts Section -->
+    <section id="podcasts" class="content-section">
+        <div class="section-header">
+            <h3>Popular Podcasts</h3>
+            <a href="#" class="view-all">View All →</a>
+        </div>
+        <div class="podcast-grid">
+            <div class="podcast-card">
+                <div class="podcast-image">
+                    <img src="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=200&h=200&fit=crop" alt="Podcast 1">
+                    <div class="podcast-overlay">
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                </div>
+                <h4>Music Talks</h4>
+                <p>Your favorite music discussions</p>
+                <span class="podcast-badge">New Episode</span>
+            </div>
+            <div class="podcast-card">
+                <div class="podcast-image">
+                    <img src="https://images.unsplash.com/photo-1527180182-50aed528f22d?w=200&h=200&fit=crop" alt="Podcast 2">
+                    <div class="podcast-overlay">
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                </div>
+                <h4>Artist Stories</h4>
+                <p>Behind the scenes with artists</p>
+                <span class="podcast-badge">New Episode</span>
+            </div>
+            <div class="podcast-card">
+                <div class="podcast-image">
+                    <img src="https://images.unsplash.com/photo-1534777412168-442b510d52af?w=200&h=200&fit=crop" alt="Podcast 3">
+                    <div class="podcast-overlay">
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                </div>
+                <h4>Beats & Rhythms</h4>
+                <p>Deep dive into music production</p>
+                <span class="podcast-badge">Released</span>
+            </div>
+            <div class="podcast-card">
+                <div class="podcast-image">
+                    <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&h=200&fit=crop" alt="Podcast 4">
+                    <div class="podcast-overlay">
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                </div>
+                <h4>Sound Check</h4>
+                <p>Weekly music updates</p>
+                <span class="podcast-badge">New Episode</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Artists Section -->
+    <section class="featured-artists">
+        <div class="section-header">
+            <h3>Featured Artists</h3>
+            <a href="#" class="view-all">View All →</a>
+        </div>
+        <div class="artists-grid">
+            <a href="https://www.youtube.com/@TheWeeknd" target="_blank" rel="noopener noreferrer" class="artist-card">
+                <div class="artist-image">
+                    <img src="https://images.unsplash.com/photo-1511379938547-c1f69b13d835?w=250&h=250&fit=crop" alt="The Weeknd">
+                    <div class="artist-overlay">
+                        <button class="follow-btn">Follow</button>
+                    </div>
+                </div>
+                <h4>The Weeknd</h4>
+                <p class="followers">2.5M Followers</p>
+            </a>
+            <a href="https://www.youtube.com/@TaylorSwift" target="_blank" rel="noopener noreferrer" class="artist-card">
+                <div class="artist-image">
+                    <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=250&h=250&fit=crop" alt="Taylor Swift">
+                    <div class="artist-overlay">
+                        <button class="follow-btn">Follow</button>
+                    </div>
+                </div>
+                <h4>Taylor Swift</h4>
+                <p class="followers">3.1M Followers</p>
+            </a>
+            <a href="https://www.youtube.com/@arijitsingh" target="_blank" rel="noopener noreferrer" class="artist-card">
+                <div class="artist-image">
+                    <img src="https://images.unsplash.com/photo-1516575334481-f410a11e6dba?w=250&h=250&fit=crop" alt="Arijit Singh">
+                    <div class="artist-overlay">
+                        <button class="follow-btn">Follow</button>
+                    </div>
+                </div>
+                <h4>Arijit Singh</h4>
+                <p class="followers">1.8M Followers</p>
+            </a>
+            <a href="https://www.youtube.com/@JubinNautiyal" target="_blank" rel="noopener noreferrer" class="artist-card">
+                <div class="artist-image">
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=250&h=250&fit=crop" alt="Jubin Nautiyal">
+                    <div class="artist-overlay">
+                        <button class="follow-btn">Follow</button>
+                    </div>
+                </div>
+                <h4>Jubin Nautiyal</h4>
+                <p class="followers">1.2M Followers</p>
+            </a>
+            <a href="https://www.youtube.com/@dualipa" target="_blank" rel="noopener noreferrer" class="artist-card">
+                <div class="artist-image">
+                    <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=250&h=250&fit=crop" alt="Dua Lipa">
+                    <div class="artist-overlay">
+                        <button class="follow-btn">Follow</button>
+                    </div>
+                </div>
+                <h4>Dua Lipa</h4>
+                <p class="followers">2.9M Followers</p>
+            </a>
+            <a href="https://www.youtube.com/@ShreyaGhoshal" target="_blank" rel="noopener noreferrer" class="artist-card">
+                <div class="artist-image">
+                    <img src="https://images.unsplash.com/photo-1511674182-9f0d26f8c2e9?w=250&h=250&fit=crop" alt="Shreya Ghoshal">
+                    <div class="artist-overlay">
+                        <button class="follow-btn">Follow</button>
+                    </div>
+                </div>
+                <h4>Shreya Ghoshal</h4>
+                <p class="followers">1.5M Followers</p>
+            </a>
+            <a href="https://www.youtube.com/@EdSheeran" target="_blank" rel="noopener noreferrer" class="artist-card">
+                <div class="artist-image">
+                    <img src="https://images.unsplash.com/photo-1534777412168-442b510d52af?w=250&h=250&fit=crop" alt="Ed Sheeran">
+                    <div class="artist-overlay">
+                        <button class="follow-btn">Follow</button>
+                    </div>
+                </div>
+                <h4>Ed Sheeran</h4>
+                <p class="followers">2.7M Followers</p>
+            </a>
+            <a href="https://www.youtube.com/@BillieEilish" target="_blank" rel="noopener noreferrer" class="artist-card">
+                <div class="artist-image">
+                    <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=250&h=250&fit=crop" alt="Billie Eilish">
+                    <div class="artist-overlay">
+                        <button class="follow-btn">Follow</button>
+                    </div>
+                </div>
+                <h4>Billie Eilish</h4>
+                <p class="followers">2.2M Followers</p>
+            </a>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="cta-content">
+            <h2>Ready to unlock unlimited music?</h2>
+            <p>Join millions of listeners enjoying ad-free streaming, offline downloads, and more</p>
+            <a href="signup.html" class="btn btn-large btn-gradient">Get Premium Now</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Careers</a></li>
+                    <li><a href="#">Press</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Community</h4>
+                <ul>
+                    <li><a href="#">For Artists</a></li>
+                    <li><a href="#">Developers</a></li>
+                    <li><a href="#">Blog</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Follow Us</h4>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 SoundWave. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
+</body>
+</html>
