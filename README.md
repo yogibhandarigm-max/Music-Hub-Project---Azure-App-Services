@@ -74,6 +74,22 @@ For security, passwords must contain:
 3. Navigate through the pages using the menu
 4. Test the login and sign-up forms with validation
 
+## YouTube Trending Sync (optional)
+
+The home page can automatically sync the `Trending Now` section from YouTube Music using the YouTube Data API v3. To enable:
+
+1. Get a YouTube Data API v3 key from Google Cloud Console.
+2. Copy `config.example.js` to `config.js` and replace `YOUR_KEY_HERE` with your API key.
+3. Open `index.html` in your browser — the `Trending Now` cards will populate from YouTube (music category) and each card links to the YouTube watch page for that song.
+
+Notes:
+- Do not commit `config.js` with your API key to version control.
+- The sync runs client-side and requires network access to the YouTube Data API.
+
+Automatic refresh interval
+- You can configure automatic syncing every X minutes by setting `window.YOUTUBE_SYNC_INTERVAL_MINUTES` in `config.js` (example value `10`).
+- Set the value to `0` to disable auto-refresh.
+
 ## Deploying to Azure App Service
 
 ### Prerequisites
