@@ -124,8 +124,8 @@ If you have no resources in Azure yet, start with the steps above to create your
 Follow these implementation phases in order. Each phase includes portal steps and CLI commands so you can practice both approaches.
 
 ### Phase 1: Build the Azure Functions backend
-1. Create a `functions/` folder in the project.
-2. Use Azure Functions Core Tools to initialize and scaffold the functions. The CLI creates the required files automatically:
+1. Create a `functions/` folder in the project if it does not already exist.
+2. Use Azure Functions Core Tools to initialize and scaffold the function app:
    ```bash
    cd functions
    npm install -g azure-functions-core-tools@4
@@ -143,65 +143,35 @@ Follow these implementation phases in order. Each phase includes portal steps an
    - `functions/signup/index.js`
    - `functions/trending/function.json`
    - `functions/trending/index.js`
-4. Replace the generated placeholder code with real logic. Example login function:
-   `functions/login/index.js`
-   ```js
-   module.exports = async function (context, req) {
-     const { email, password } = req.body || {};
-     if (!email || !password) {
-       context.res = {
-         status: 400,
-         body: { error: 'Email and password are required.' }
-       };
-       return;
-     }
-     context.res = {
-       status: 200,
-       body: {
-         message: 'Login successful',
-         user: { email }
-       }
-     };
-   };
-   ```
-   `functions/login/function.json`
-   ```json
-   {
-     "bindings": [
-       {
-         "authLevel": "anonymous",
-         "type": "httpTrigger",
-         "direction": "in",
-         "name": "req",
-         "methods": ["post"]
-       },
-       {
-         "type": "http",
-         "direction": "out",
-         "name": "res"
-       }
-     ]
-   }
-   ```
-5. Create similar mock content for `signup` and `trending` functions.
-6. Run locally:
-   ```bash
-   func start
-   ```
-7. Test locally:
-   - `http://localhost:7071/api/login`
-   - `http://localhost:7071/api/signup`
-   - `http://localhost:7071/api/trending`
+4. Add helper files for backend integration:
+   - `functions/db.js`
+   - `functions/keyvault.js`
+   - `functions/auth.js`
+   - `functions/package.json`
+   - `functions/README-functions.md`
+5. Replace the generated placeholder code with the current implementation:
+   - `login` validates credentials against Azure Table Storage and returns a signed JWT token using `functions/auth.js`.
+   - `signup` stores a new user record in Azure Table Storage with a SHA-256 hashed password.
+   - `trending` reads the YouTube API key from environment variables or Azure Key Vault and returns India trending songs from the YouTube Data API, with a fallback static playlist if the key is unavailable.
+6. Configure local settings and environment variables:
+   - `AzureWebJobsStorage=UseDevelopmentStorage=true`
+   - `FUNCTIONS_WORKER_RUNTIME=node`
+   - `STORAGE_ACCOUNT_NAME`
+   - `STORAGE_ACCOUNT_KEY` or `STORAGE_ACCOUNT_KEY_SECRET_NAME`
+   - `USER_TABLE_NAME` (default: `Users`)
+   - `KEY_VAULT_NAME`
+   - `JWT_SECRET_NAME` (default: `JwtSecret`)
+   - `YOUTUBE_API_KEY_SECRET_NAME` (default: `YouTubeApiKey`)
+7. Install dependencies:
    ```bash
    cd functions
-   npm install -g azure-functions-core-tools@4
-   func init . --javascript
-   func new --name login --template "HTTP trigger" --authlevel anonymous
-   func new --name signup --template "HTTP trigger" --authlevel anonymous
-   func new --name trending --template "HTTP trigger" --authlevel anonymous
+   npm install
+   ```
+8. Run locally:
+   ```bash
    func start
    ```
-4. Test in browser or Postman:
+9. Test locally:
    - `http://localhost:7071/api/login`
    - `http://localhost:7071/api/signup`
    - `http://localhost:7071/api/trending`
@@ -210,9 +180,182 @@ Portal steps:
 - Azure Portal > Create a resource > Function App.
 - Runtime stack: Node 18.
 - Publish: Code.
-- Create Storage account.
-- Deploy functions from VS Code or ZIP.
-- Configure App Settings for your backend.
+- Create or reuse a Storage account.
+- Create or reuse a Key Vault.
+- Enable system-assigned managed identity for the Function App.
+- Grant the Function App managed identity access to get/list secrets in Key Vault.
+- Configure App Settings: `KEY_VAULT_NAME`, `JWT_SECRET_NAME`, `YOUTUBE_API_KEY_SECRET_NAME`, and `STORAGE_ACCOUNT_KEY_SECRET_NAME` if applicable.
+- Use APIM to front the Function App and apply CORS and JWT validation policies.
+
+### Phase 2: Deploy the frontend to App Service
+1. Create App Service plan and web app.
+2. Zip deploy the static site.
+3. Enable HTTPS-only.
+
+CLI commands:
+```bash
+az appservice plan create \
+  --name swarity-plan \
+  --resource-group swarity-rg \
+  --sku B1 \
+  --is-linux
+
+az webapp create \
+  --resource-group swarity-rg \
+  --plan swarity-plan \
+  --name swarity-app \
+  --runtime "NODE|18-lts"
+
+zip -r swarity-frontend.zip . -x "*.git*" "*.env*"
+az webapp deployment source config-zip \
+  --resource-group swarity-rg \
+  --name swarity-app \
+  --src swarity-frontend.zip
+
+az webapp update \
+  --resource-group swarity-rg \
+  --name swarity-app \
+  --https-only true
+```
+
+Portal steps:
+- App Service > Create > select `swarity-rg`.
+- Choose a unique app name.
+- Use Node 18 runtime.
+- Deployment Center > Zip Deploy.
+- TLS/SSL settings > HTTPS Only.
+
+### Phase 3: Add API Management and Key Vault integration
+1. Create an Azure Key Vault and add secrets:
+   - `JwtSecret`
+   - `YouTubeApiKey`
+   - `StorageAccountKey` (optional)
+2. Enable system-assigned managed identity for the Function App.
+3. Grant the Function App access to Key Vault secrets.
+4. Create Azure API Management.
+5. Import the Function App APIs into APIM.
+6. Apply APIM policies for CORS, JWT validation, and rate limiting.
+
+CLI commands:
+```bash
+az keyvault create \
+  --resource-group swarity-rg \
+  --name swarity-kv \
+  --location eastus
+
+az keyvault secret set \
+  --vault-name swarity-kv \
+  --name JwtSecret \
+  --value "<jwt-secret>"
+
+az keyvault secret set \
+  --vault-name swarity-kv \
+  --name YouTubeApiKey \
+  --value "<youtube-api-key>"
+
+az keyvault secret set \
+  --vault-name swarity-kv \
+  --name StorageAccountKey \
+  --value "<storage-account-key>"
+
+az functionapp identity assign \
+  --name swarity-functions \
+  --resource-group swarity-rg
+
+FUNCTION_PRINCIPAL_ID=$(az functionapp identity show \
+  --name swarity-functions \
+  --resource-group swarity-rg \
+  --query principalId -o tsv)
+
+az keyvault set-policy \
+  --name swarity-kv \
+  --object-id $FUNCTION_PRINCIPAL_ID \
+  --secret-permissions get list
+
+az apim create \
+  --name swarity-apim \
+  --resource-group swarity-rg \
+  --publisher-email admin@swarity.com \
+  --publisher-name Swarity \
+  --sku Developer \
+  --location eastus
+```
+
+Portal steps:
+- Key Vault > Create > add secrets for `JwtSecret`, `YouTubeApiKey`, and optionally `StorageAccountKey`.
+- Function App > Identity > enable system-assigned managed identity.
+- Key Vault > Access policies > assign the Function App principal permission to Get and List secrets.
+- Function App > Configuration > add `KEY_VAULT_NAME`, `JWT_SECRET_NAME`, `YOUTUBE_API_KEY_SECRET_NAME`, and `STORAGE_ACCOUNT_KEY_SECRET_NAME` if needed.
+- APIM > Create.
+- APIM > APIs > Add API > Function App.
+- APIM > Add CORS policy for App Service origin.
+- APIM > Add JWT validation policy and optional rate limiting.
+
+### Phase 4: Add networking and security
+1. Create VNet and subnets:
+   - `app-subnet`
+   - `func-subnet`
+   - `private-subnet`
+   - `AzureFirewallSubnet`
+2. Create NSGs and attach them to workload subnets.
+3. Create Azure Firewall and Firewall Policy.
+4. Create UDR and route to the firewall private IP.
+5. Create Private Endpoints and Private DNS.
+
+CLI commands:
+```bash
+az network vnet create \
+  --resource-group swarity-rg \
+  --name swarity-vnet \
+  --address-prefix 10.0.0.0/16 \
+  --subnet-name app-subnet \
+  --subnet-prefix 10.0.1.0/24
+
+az network vnet subnet create \
+  --resource-group swarity-rg \
+  --vnet-name swarity-vnet \
+  --name func-subnet \
+  --address-prefix 10.0.2.0/24
+
+az network vnet subnet create \
+  --resource-group swarity-rg \
+  --vnet-name swarity-vnet \
+  --name private-subnet \
+  --address-prefix 10.0.3.0/24
+
+az network vnet subnet create \
+  --resource-group swarity-rg \
+  --vnet-name swarity-vnet \
+  --name AzureFirewallSubnet \
+  --address-prefix 10.0.4.0/26
+
+az network nsg create --resource-group swarity-rg --name swarity-app-nsg
+az network nsg create --resource-group swarity-rg --name swarity-func-nsg
+
+az network firewall policy create \
+  --resource-group swarity-rg \
+  --name swarity-fwpolicy
+
+az network firewall create \
+  --resource-group swarity-rg \
+  --name swarity-firewall \
+  --location eastus \
+  --sku AZFW_VNet \
+  --vnet-name swarity-vnet \
+  --public-ip-address swarity-fw-pip \
+  --firewall-policy swarity-fwpolicy
+```
+
+Portal steps:
+- VNet > Create or edit > add subnets.
+- Add a subnet named `AzureFirewallSubnet` with purpose `Azure Firewall`.
+- Create NSGs and attach to `app-subnet` and `func-subnet`.
+- Firewall Policy > create rules for HTTP/HTTPS/DNS.
+- Firewall > create and associate with VNet and Firewall Policy.
+- Route table > create and add route to firewall private IP.
+- Associate route table to workload subnets only.
+- Private endpoint > create for Key Vault/Storage.
+- Private DNS zone > add zone and virtual network link.
 
 ### Phase 2: Deploy the frontend to App Service
 1. Create App Service plan and web app.

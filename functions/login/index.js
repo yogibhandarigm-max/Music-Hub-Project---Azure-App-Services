@@ -1,3 +1,11 @@
+const crypto = require('crypto');
+const { getUserByEmail } = require('../db');
+const { signToken } = require('../auth');
+
+function hashPassword(password) {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
+
 module.exports = async function (context, req) {
   const { email, password } = req.body || {};
 
@@ -9,11 +17,33 @@ module.exports = async function (context, req) {
     return;
   }
 
+  const user = await getUserByEmail(email);
+  if (!user || user.passwordHash !== hashPassword(password)) {
+    context.res = {
+      status: 401,
+      body: { error: 'Invalid email or password.' }
+    };
+    return;
+  }
+
+  const token = await signToken({
+    email: user.rowKey,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    role: user.role
+  });
+
   context.res = {
     status: 200,
     body: {
       message: 'Login successful',
-      user: { email }
+      token,
+      user: {
+        email: user.rowKey,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role
+      }
     }
   };
 };

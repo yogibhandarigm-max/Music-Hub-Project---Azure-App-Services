@@ -74,6 +74,19 @@ For security, passwords must contain:
 3. Navigate through the pages using the menu
 4. Test the login and sign-up forms with validation
 
+## Azure data model
+
+This project uses Azure Table Storage for application data that is simple and schema-light, such as user accounts and authentication metadata.
+
+- Use Azure Table Storage for user records:
+  - partition key: `USER`
+  - row key: user email
+  - hashed password and role
+- Use Azure Key Vault for secrets:
+  - storage account access key
+  - JWT signing secret
+  - YouTube API key
+
 ## Implementation Roadmap
 
 This project can be extended in phases to learn Azure services, networking, security, monitoring, and deployment automation. Follow the steps below in order, and repeat them manually in the Azure portal and with CLI commands.
@@ -107,58 +120,59 @@ If you have no Azure resources yet, first create the resource group and storage 
    - `functions/signup/index.js`
    - `functions/trending/function.json`
    - `functions/trending/index.js`
-4. Replace the generated placeholder code with real logic. Example content:
-   `functions/login/index.js`
-   ```js
-   module.exports = async function (context, req) {
-     const { email, password } = req.body || {};
-     if (!email || !password) {
-       context.res = {
-         status: 400,
-         body: { error: 'Email and password are required.' }
-       };
-       return;
-     }
-     context.res = {
-       status: 200,
-       body: {
-         message: 'Login successful',
-         user: { email }
-       }
-     };
-   };
-   ```
-   `functions/login/function.json`
+4. Add the helper files:
+   - `functions/db.js`
+   - `functions/keyvault.js`
+   - `functions/auth.js`
+   - `functions/package.json`
+   - `functions/README-functions.md`
+5. Replace the generated placeholder code with the current implementation:
+   - `functions/login/index.js` validates user credentials against Azure Table Storage and returns a signed JWT token.
+   - `functions/signup/index.js` stores a new user record in Azure Table Storage with a SHA-256 hashed password.
+   - `functions/trending/index.js` reads the YouTube API key from environment variables or Azure Key Vault and returns India music trending songs, with a static fallback if the API key is unavailable.
+6. Configure local settings and environment variables:
+   - `AzureWebJobsStorage=UseDevelopmentStorage=true`
+   - `FUNCTIONS_WORKER_RUNTIME=node`
+   - `STORAGE_ACCOUNT_NAME`
+   - `STORAGE_ACCOUNT_KEY` or `STORAGE_ACCOUNT_KEY_SECRET_NAME`
+   - `USER_TABLE_NAME` (default: `Users`)
+   - `KEY_VAULT_NAME`
+   - `JWT_SECRET_NAME` (default: `JwtSecret`)
+   - `YOUTUBE_API_KEY_SECRET_NAME` (default: `YouTubeApiKey`)
+7. Example `functions/local.settings.json`:
    ```json
    {
-     "bindings": [
-       {
-         "authLevel": "anonymous",
-         "type": "httpTrigger",
-         "direction": "in",
-         "name": "req",
-         "methods": ["post"]
-       },
-       {
-         "type": "http",
-         "direction": "out",
-         "name": "res"
-       }
-     ]
+     "IsEncrypted": false,
+     "Values": {
+       "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+       "FUNCTIONS_WORKER_RUNTIME": "node",
+       "STORAGE_ACCOUNT_NAME": "<your-storage-account-name>",
+       "STORAGE_ACCOUNT_KEY": "<your-storage-account-key>",
+       "USER_TABLE_NAME": "Users",
+       "KEY_VAULT_NAME": "<your-key-vault-name>",
+       "JWT_SECRET_NAME": "JwtSecret",
+       "YOUTUBE_API_KEY_SECRET_NAME": "YouTubeApiKey"
+     }
    }
    ```
-5. Add similar content for `signup` and `trending` functions:
-   - `signup` returns a mock new user object.
-   - `trending` returns sample trending songs or forwards data from YouTube.
-6. Run locally:
+8. Install dependencies:
+   ```bash
+   cd functions
+   npm install
+   ```
+9. Run locally:
    ```bash
    func start
    ```
-7. Test locally:
+10. Test locally:
    - `http://localhost:7071/api/login`
    - `http://localhost:7071/api/signup`
    - `http://localhost:7071/api/trending`
-8. Update frontend calls in `index.html` or add `config.js` with `window.API_BASE_URL`.
+11. Update frontend calls in `index.html` or add `config.js` with `window.API_BASE_URL`, then call:
+   - `POST ${API_BASE_URL}/login`
+   - `POST ${API_BASE_URL}/signup`
+   - `GET ${API_BASE_URL}/trending`
+12. When deployed to Azure, enable system-assigned managed identity for the Function App, grant it Key Vault `get` and `list` permission, and use Azure App Settings to reference `KEY_VAULT_NAME`, `JWT_SECRET_NAME`, `YOUTUBE_API_KEY_SECRET_NAME`, and `STORAGE_ACCOUNT_KEY_SECRET_NAME`.
 
 Manual portal steps:
 - Create a Function App in Azure Portal.
@@ -377,6 +391,19 @@ Manual portal steps:
 - Create AKS cluster.
 - Configure ingress and DNS.
 - Connect to ACR from AKS.
+
+## Principal Engineer Azure PaaS learning recommendations
+To build interview-ready experience, extend this project with real-world Azure PaaS patterns, automation, and operations:
+- Add Infrastructure as Code with Bicep or Terraform for App Service, Function App, APIM, Key Vault, VNet, private endpoints, and firewall.
+- Build CI/CD pipelines with GitHub Actions or Azure DevOps to deploy frontend, backend, and IaC together.
+- Add API security with APIM JWT validation, managed identity auth, and Azure AD OAuth/OpenID Connect.
+- Implement observability with Application Insights, Log Analytics, distributed traces, and alerting for failures and latency.
+- Add network isolation using VNet integration, private endpoints, Azure Firewall, NSGs, and private DNS.
+- Improve resiliency with deployment slots, autoscale rules, health probes, and rollback support.
+- Strengthen security by rotating secrets, using Key Vault references, and upgrading password hashing to bcrypt or Argon2.
+- Add governance and cost controls with resource tagging, budgets, policies, and deployment validation.
+- Create architecture documentation, tradeoff notes, and an operational runbook for the solution.
+- Add test coverage with unit tests for functions and integration tests for API endpoints.
 
 ---
 
