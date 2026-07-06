@@ -1,0 +1,1234 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.44.1.10279",
+      "templateHash": "11619983361746946743"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "eastus"
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {
+        "project": "Swarity",
+        "environment": "dev",
+        "owner": "Swarity Team"
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "swarity-vnet"
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "[format('swaritystorage{0}', uniqueString(resourceGroup().id))]"
+    },
+    "appServicePlanName": {
+      "type": "string",
+      "defaultValue": "swarity-plan"
+    },
+    "webAppName": {
+      "type": "string",
+      "defaultValue": "swarity-app"
+    },
+    "functionAppName": {
+      "type": "string",
+      "defaultValue": "swarity-functions"
+    },
+    "keyVaultName": {
+      "type": "string",
+      "defaultValue": "swarity-kv"
+    },
+    "appInsightsName": {
+      "type": "string",
+      "defaultValue": "swarity-ai"
+    },
+    "apiManagementName": {
+      "type": "string",
+      "defaultValue": "swarity-apim"
+    },
+    "publicIpName": {
+      "type": "string",
+      "defaultValue": "swarity-fw-pip"
+    },
+    "firewallName": {
+      "type": "string",
+      "defaultValue": "swarity-firewall"
+    },
+    "firewallPolicyName": {
+      "type": "string",
+      "defaultValue": "swarity-fwpolicy"
+    },
+    "appGatewayName": {
+      "type": "string",
+      "defaultValue": "swarity-appgw"
+    },
+    "appGatewayPublicIpName": {
+      "type": "string",
+      "defaultValue": "swarity-appgw-pip"
+    },
+    "privateDnsZoneName": {
+      "type": "string",
+      "defaultValue": "privatelink.blob.core.windows.net"
+    },
+    "privateDnsZoneVault": {
+      "type": "string",
+      "defaultValue": "privatelink.vaultcore.azure.net"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "storageModule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "storageAccountName": {
+            "value": "[parameters('storageAccountName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "815158183862474805"
+            }
+          },
+          "parameters": {
+            "storageAccountName": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2022-09-01",
+              "name": "[parameters('storageAccountName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "Standard_LRS"
+              },
+              "kind": "StorageV2",
+              "properties": {
+                "accessTier": "Hot"
+              }
+            }
+          ],
+          "outputs": {
+            "storageAccountId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+            },
+            "storageAccountName": {
+              "type": "string",
+              "value": "[parameters('storageAccountName')]"
+            },
+            "storageAccountConnectionString": {
+              "type": "string",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', parameters('storageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2022-09-01').keys[0].value)]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "keyVaultModule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "keyVaultName": {
+            "value": "[parameters('keyVaultName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "1756340791026731423"
+            }
+          },
+          "parameters": {
+            "keyVaultName": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "tenantId": {
+              "type": "string",
+              "defaultValue": "[subscription().tenantId]"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.KeyVault/vaults",
+              "apiVersion": "2022-07-01",
+              "name": "[parameters('keyVaultName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "sku": {
+                  "family": "A",
+                  "name": "standard"
+                },
+                "tenantId": "[parameters('tenantId')]",
+                "accessPolicies": [],
+                "enabledForDeployment": true,
+                "enabledForDiskEncryption": true,
+                "enabledForTemplateDeployment": true
+              }
+            }
+          ],
+          "outputs": {
+            "keyVaultId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+            },
+            "keyVaultUri": {
+              "type": "string",
+              "value": "[format('https://{0}.vault.azure.net/', parameters('keyVaultName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "monitoringModule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "appInsightsName": {
+            "value": "[parameters('appInsightsName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "5343441017339731283"
+            }
+          },
+          "parameters": {
+            "appInsightsName": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2020-02-02",
+              "name": "[parameters('appInsightsName')]",
+              "location": "[parameters('location')]",
+              "kind": "web",
+              "properties": {
+                "Application_Type": "web"
+              }
+            }
+          ],
+          "outputs": {
+            "appInsightsInstrumentationKey": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Insights/components', parameters('appInsightsName')), '2020-02-02').InstrumentationKey]"
+            },
+            "appInsightsConnectionString": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Insights/components', parameters('appInsightsName')), '2020-02-02').ConnectionString]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "vnetModule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vnetName": {
+            "value": "[parameters('vnetName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "16929954065839164340"
+            }
+          },
+          "parameters": {
+            "vnetName": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "addressPrefix": {
+              "type": "string",
+              "defaultValue": "10.0.0.0/16"
+            },
+            "appSubnetPrefix": {
+              "type": "string",
+              "defaultValue": "10.0.1.0/24"
+            },
+            "funcSubnetPrefix": {
+              "type": "string",
+              "defaultValue": "10.0.2.0/24"
+            },
+            "privateSubnetPrefix": {
+              "type": "string",
+              "defaultValue": "10.0.3.0/24"
+            },
+            "firewallSubnetPrefix": {
+              "type": "string",
+              "defaultValue": "10.0.4.0/26"
+            },
+            "appGatewaySubnetPrefix": {
+              "type": "string",
+              "defaultValue": "10.0.5.0/26"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2023-05-01",
+              "name": "[parameters('vnetName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('addressPrefix')]"
+                  ]
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}', parameters('vnetName'), 'app-subnet')]",
+              "properties": {
+                "addressPrefix": "[parameters('appSubnetPrefix')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}', parameters('vnetName'), 'func-subnet')]",
+              "properties": {
+                "addressPrefix": "[parameters('funcSubnetPrefix')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}', parameters('vnetName'), 'private-subnet')]",
+              "properties": {
+                "addressPrefix": "[parameters('privateSubnetPrefix')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}', parameters('vnetName'), 'AzureFirewallSubnet')]",
+              "properties": {
+                "addressPrefix": "[parameters('firewallSubnetPrefix')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}', parameters('vnetName'), 'appgw-subnet')]",
+              "properties": {
+                "addressPrefix": "[parameters('appGatewaySubnetPrefix')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "vnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+            },
+            "appSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'app-subnet')]"
+            },
+            "funcSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'func-subnet')]"
+            },
+            "privateSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'private-subnet')]"
+            },
+            "firewallSubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'AzureFirewallSubnet')]"
+            },
+            "appGatewaySubnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'appgw-subnet')]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "appServiceModule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "appServicePlanName": {
+            "value": "[parameters('appServicePlanName')]"
+          },
+          "webAppName": {
+            "value": "[parameters('webAppName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "1186131746307396087"
+            }
+          },
+          "parameters": {
+            "appServicePlanName": {
+              "type": "string"
+            },
+            "webAppName": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "skuName": {
+              "type": "string",
+              "defaultValue": "B1"
+            },
+            "skuTier": {
+              "type": "string",
+              "defaultValue": "Basic"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2022-03-01",
+              "name": "[parameters('appServicePlanName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "[parameters('skuName')]",
+                "tier": "[parameters('skuTier')]",
+                "capacity": 1
+              },
+              "properties": {
+                "reserved": true
+              }
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2022-03-01",
+              "name": "[parameters('webAppName')]",
+              "location": "[parameters('location')]",
+              "kind": "app",
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+                "httpsOnly": true
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "webAppId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
+            },
+            "appServicePlanId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "functionsModule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "functionAppName": {
+            "value": "[parameters('functionAppName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "serverFarmId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appServiceModule'), '2025-04-01').outputs.appServicePlanId.value]"
+          },
+          "storageConnectionString": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storageModule'), '2025-04-01').outputs.storageAccountConnectionString.value]"
+          },
+          "appInsightsConnectionString": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'monitoringModule'), '2025-04-01').outputs.appInsightsConnectionString.value]"
+          },
+          "appInsightsInstrumentationKey": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'monitoringModule'), '2025-04-01').outputs.appInsightsInstrumentationKey.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "10652107124049444507"
+            }
+          },
+          "parameters": {
+            "functionAppName": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "serverFarmId": {
+              "type": "string"
+            },
+            "storageConnectionString": {
+              "type": "string"
+            },
+            "appInsightsConnectionString": {
+              "type": "string"
+            },
+            "appInsightsInstrumentationKey": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2022-03-01",
+              "name": "[parameters('functionAppName')]",
+              "location": "[parameters('location')]",
+              "kind": "functionapp",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "serverFarmId": "[parameters('serverFarmId')]",
+                "siteConfig": {
+                  "appSettings": [
+                    {
+                      "name": "AzureWebJobsStorage",
+                      "value": "[parameters('storageConnectionString')]"
+                    },
+                    {
+                      "name": "FUNCTIONS_WORKER_RUNTIME",
+                      "value": "node"
+                    },
+                    {
+                      "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                      "value": "[parameters('appInsightsInstrumentationKey')]"
+                    },
+                    {
+                      "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+                      "value": "[parameters('appInsightsConnectionString')]"
+                    }
+                  ]
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "functionAppResourceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]"
+            },
+            "functionAppPrincipalId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2022-03-01', 'full').identity.principalId]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'appServiceModule')]",
+        "[resourceId('Microsoft.Resources/deployments', 'monitoringModule')]",
+        "[resourceId('Microsoft.Resources/deployments', 'storageModule')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "apimModule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "apiManagementName": {
+            "value": "[parameters('apiManagementName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "13170785091573970456"
+            }
+          },
+          "parameters": {
+            "apiManagementName": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ApiManagement/service",
+              "apiVersion": "2022-08-01",
+              "name": "[parameters('apiManagementName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "Developer",
+                "capacity": 1
+              },
+              "properties": {
+                "publisherName": "Swarity",
+                "publisherEmail": "admin@swarity.com"
+              }
+            }
+          ],
+          "outputs": {
+            "apiManagementId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ApiManagement/service', parameters('apiManagementName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "firewallModule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "firewallName": {
+            "value": "[parameters('firewallName')]"
+          },
+          "publicIpName": {
+            "value": "[parameters('publicIpName')]"
+          },
+          "firewallPolicyName": {
+            "value": "[parameters('firewallPolicyName')]"
+          },
+          "vnetName": {
+            "value": "[parameters('vnetName')]"
+          },
+          "resourceGroupName": {
+            "value": "[resourceGroup().name]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "8106293718594310438"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "firewallName": {
+              "type": "string"
+            },
+            "publicIpName": {
+              "type": "string"
+            },
+            "firewallPolicyName": {
+              "type": "string"
+            },
+            "vnetName": {
+              "type": "string"
+            },
+            "resourceGroupName": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/publicIPAddresses",
+              "apiVersion": "2023-05-01",
+              "name": "[parameters('publicIpName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "Standard"
+              },
+              "properties": {
+                "publicIPAllocationMethod": "Static"
+              }
+            },
+            {
+              "type": "Microsoft.Network/firewallPolicies",
+              "apiVersion": "2023-05-01",
+              "name": "[parameters('firewallPolicyName')]",
+              "location": "[parameters('location')]"
+            },
+            {
+              "type": "Microsoft.Network/azureFirewalls",
+              "apiVersion": "2023-05-01",
+              "name": "[parameters('firewallName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "AZFW_VNet",
+                "tier": "Standard"
+              },
+              "properties": {
+                "firewallPolicy": {
+                  "id": "[resourceId('Microsoft.Network/firewallPolicies', parameters('firewallPolicyName'))]"
+                },
+                "ipConfigurations": [
+                  {
+                    "name": "fw-config",
+                    "properties": {
+                      "subnet": {
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), 'AzureFirewallSubnet')]"
+                      },
+                      "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
+                      }
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/firewallPolicies', parameters('firewallPolicyName'))]",
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "firewallId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/azureFirewalls', parameters('firewallName'))]"
+            },
+            "firewallPolicyId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/firewallPolicies', parameters('firewallPolicyName'))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "appGatewayModule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "appGatewayName": {
+            "value": "[parameters('appGatewayName')]"
+          },
+          "appGatewayPublicIpName": {
+            "value": "[parameters('appGatewayPublicIpName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "subnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnetModule'), '2025-04-01').outputs.appGatewaySubnetId.value]"
+          },
+          "backendFqdn": {
+            "value": "[format('{0}.azurewebsites.net', parameters('webAppName'))]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "4226604657859427150"
+            }
+          },
+          "parameters": {
+            "appGatewayName": {
+              "type": "string"
+            },
+            "appGatewayPublicIpName": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "subnetId": {
+              "type": "string"
+            },
+            "backendFqdn": {
+              "type": "string"
+            },
+            "useHttps": {
+              "type": "bool",
+              "defaultValue": false
+            },
+            "frontendCertificateData": {
+              "type": "securestring",
+              "defaultValue": ""
+            },
+            "frontendCertificatePassword": {
+              "type": "securestring",
+              "defaultValue": ""
+            }
+          },
+          "variables": {
+            "frontendPortName": "[if(parameters('useHttps'), 'appGatewayFrontendPortHttps', 'appGatewayFrontendPortHttp')]",
+            "listenerProtocol": "[if(parameters('useHttps'), 'Https', 'Http')]",
+            "frontendPortValue": "[if(parameters('useHttps'), 443, 80)]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/publicIPAddresses",
+              "apiVersion": "2023-05-01",
+              "name": "[parameters('appGatewayPublicIpName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "Standard"
+              },
+              "properties": {
+                "publicIPAllocationMethod": "Static"
+              }
+            },
+            {
+              "type": "Microsoft.Network/applicationGateways",
+              "apiVersion": "2025-07-01",
+              "name": "[parameters('appGatewayName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "WAF_v2",
+                "tier": "WAF_v2",
+                "capacity": 2
+              },
+              "properties": {
+                "gatewayIPConfigurations": [
+                  {
+                    "name": "appGatewayIpConfig",
+                    "properties": {
+                      "subnet": {
+                        "id": "[parameters('subnetId')]"
+                      }
+                    }
+                  }
+                ],
+                "frontendIPConfigurations": [
+                  {
+                    "name": "appGatewayFrontendIP",
+                    "properties": {
+                      "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('appGatewayPublicIpName'))]"
+                      }
+                    }
+                  }
+                ],
+                "frontendPorts": [
+                  {
+                    "name": "[variables('frontendPortName')]",
+                    "properties": {
+                      "port": "[variables('frontendPortValue')]"
+                    }
+                  }
+                ],
+                "backendAddressPools": [
+                  {
+                    "name": "appGatewayBackendPool",
+                    "properties": {
+                      "backendAddresses": [
+                        {
+                          "fqdn": "[parameters('backendFqdn')]"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "backendHttpSettingsCollection": [
+                  {
+                    "name": "appGatewayBackendHttpSettings",
+                    "properties": {
+                      "port": 443,
+                      "protocol": "Https",
+                      "pickHostNameFromBackendAddress": true,
+                      "requestTimeout": 30
+                    }
+                  }
+                ],
+                "sslCertificates": "[if(parameters('useHttps'), createArray(createObject('name', 'appGatewaySslCert', 'properties', createObject('data', parameters('frontendCertificateData'), 'password', parameters('frontendCertificatePassword')))), createArray())]",
+                "httpListeners": [
+                  {
+                    "name": "appGatewayHttpListener",
+                    "properties": {
+                      "frontendIPConfiguration": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', parameters('appGatewayName'), 'appGatewayFrontendIP')]"
+                      },
+                      "frontendPort": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/frontendPorts', parameters('appGatewayName'), variables('frontendPortName'))]"
+                      },
+                      "protocol": "[variables('listenerProtocol')]",
+                      "sslCertificate": "[if(parameters('useHttps'), createObject('id', resourceId('Microsoft.Network/applicationGateways/sslCertificates', parameters('appGatewayName'), 'appGatewaySslCert')), null())]"
+                    }
+                  }
+                ],
+                "requestRoutingRules": [
+                  {
+                    "name": "appGatewayRoutingRule",
+                    "properties": {
+                      "ruleType": "Basic",
+                      "httpListener": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/httpListeners', parameters('appGatewayName'), 'appGatewayHttpListener')]"
+                      },
+                      "backendAddressPool": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/backendAddressPools', parameters('appGatewayName'), 'appGatewayBackendPool')]"
+                      },
+                      "backendHttpSettings": {
+                        "id": "[resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', parameters('appGatewayName'), 'appGatewayBackendHttpSettings')]"
+                      }
+                    }
+                  }
+                ],
+                "webApplicationFirewallConfiguration": {
+                  "enabled": true,
+                  "firewallMode": "Prevention",
+                  "ruleSetType": "OWASP",
+                  "ruleSetVersion": "3.2"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('appGatewayPublicIpName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "appGatewayId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/applicationGateways', parameters('appGatewayName'))]"
+            },
+            "appGatewayPublicIpId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('appGatewayPublicIpName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'vnetModule')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "privateEndpointsModule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "privateSubnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'vnetModule'), '2025-04-01').outputs.privateSubnetId.value]"
+          },
+          "storageAccountId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storageModule'), '2025-04-01').outputs.storageAccountId.value]"
+          },
+          "keyVaultId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyVaultModule'), '2025-04-01').outputs.keyVaultId.value]"
+          },
+          "privateDnsZoneName": {
+            "value": "[parameters('privateDnsZoneName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "11645807237784582728"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "privateSubnetId": {
+              "type": "string"
+            },
+            "storageAccountId": {
+              "type": "string"
+            },
+            "keyVaultId": {
+              "type": "string"
+            },
+            "privateDnsZoneName": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2023-05-01",
+              "name": "swarity-storage-pe",
+              "location": "[parameters('location')]",
+              "properties": {
+                "subnet": {
+                  "id": "[parameters('privateSubnetId')]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "storageConnection",
+                    "properties": {
+                      "privateLinkServiceId": "[parameters('storageAccountId')]",
+                      "groupIds": [
+                        "blob"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2023-05-01",
+              "name": "swarity-keyvault-pe",
+              "location": "[parameters('location')]",
+              "properties": {
+                "subnet": {
+                  "id": "[parameters('privateSubnetId')]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "keyVaultConnection",
+                    "properties": {
+                      "privateLinkServiceId": "[parameters('keyVaultId')]",
+                      "groupIds": [
+                        "vault"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "[parameters('privateDnsZoneName')]",
+              "location": "global"
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/swarity-vnet-link', parameters('privateDnsZoneName'))]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[split(parameters('privateSubnetId'), '/subnets/')[0]]"
+                },
+                "registrationEnabled": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "storagePrivateEndpointId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/privateEndpoints', 'swarity-storage-pe')]"
+            },
+            "keyVaultPrivateEndpointId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/privateEndpoints', 'swarity-keyvault-pe')]"
+            },
+            "privateDnsZoneId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/privateDnsZones', parameters('privateDnsZoneName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'keyVaultModule')]",
+        "[resourceId('Microsoft.Resources/deployments', 'storageModule')]",
+        "[resourceId('Microsoft.Resources/deployments', 'vnetModule')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "deploymentSlotModule",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "webAppName": {
+            "value": "[parameters('webAppName')]"
+          },
+          "slotName": {
+            "value": "staging"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.44.1.10279",
+              "templateHash": "7600483892275425633"
+            }
+          },
+          "parameters": {
+            "webAppName": {
+              "type": "string"
+            },
+            "slotName": {
+              "type": "string",
+              "defaultValue": "staging"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/sites/slots",
+              "apiVersion": "2022-03-01",
+              "name": "[format('{0}/{1}', parameters('webAppName'), parameters('slotName'))]",
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', 'swarity-plan')]"
+              }
+            }
+          ],
+          "outputs": {
+            "deploymentSlotId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Web/sites/slots', split(format('{0}/{1}', parameters('webAppName'), parameters('slotName')), '/')[0], split(format('{0}/{1}', parameters('webAppName'), parameters('slotName')), '/')[1])]"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

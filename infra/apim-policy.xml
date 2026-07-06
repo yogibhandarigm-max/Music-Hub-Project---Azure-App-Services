@@ -1,0 +1,33 @@
+<policies>
+  <inbound>
+    <base />
+    <cors allow-credentials="false">
+      <allowed-origins>
+        <origin>https://your-frontend-app.azurewebsites.net</origin>
+      </allowed-origins>
+      <allowed-methods>
+        <method>GET</method>
+        <method>POST</method>
+        <method>OPTIONS</method>
+      </allowed-methods>
+      <allowed-headers>
+        <header>*</header>
+      </allowed-headers>
+    </cors>
+    <validate-jwt header-name="Authorization" failed-validation-httpcode="401" failed-validation-error-message="Unauthorized">
+      <openid-config url="https://login.microsoftonline.com/<tenant-id>/v2.0/.well-known/openid-configuration" />
+      <required-claims>
+        <claim name="aud">
+          <value>api://<api-client-id></value>
+        </claim>
+      </required-claims>
+    </validate-jwt>
+    <set-backend-service base-url="https://<function-app>.azurewebsites.net" />
+  </inbound>
+  <backend>
+    <base />
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+</policies>

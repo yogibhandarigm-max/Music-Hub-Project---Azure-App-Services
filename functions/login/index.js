@@ -1,10 +1,6 @@
-const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const { getUserByEmail } = require('../db');
 const { signToken } = require('../auth');
-
-function hashPassword(password) {
-  return crypto.createHash('sha256').update(password).digest('hex');
-}
 
 module.exports = async function (context, req) {
   const { email, password } = req.body || {};
@@ -18,7 +14,7 @@ module.exports = async function (context, req) {
   }
 
   const user = await getUserByEmail(email);
-  if (!user || user.passwordHash !== hashPassword(password)) {
+  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
     context.res = {
       status: 401,
       body: { error: 'Invalid email or password.' }

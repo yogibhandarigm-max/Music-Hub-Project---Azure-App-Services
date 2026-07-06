@@ -37,7 +37,7 @@ This folder contains an Azure Functions backend for the Swarity project.
 
 This backend uses Azure Table Storage for user data and authentication metadata, and Azure Key Vault for secret management.
 
-- Azure Table Storage stores user records such as email, name, role, and hashed password.
+- Azure Table Storage stores user records such as email, name, role, and bcrypt password hash.
 - Azure Key Vault stores sensitive secrets such as the storage account key, JWT secret, and YouTube API key.
 
 Required local settings or environment variables:

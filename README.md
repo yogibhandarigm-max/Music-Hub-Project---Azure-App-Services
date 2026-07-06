@@ -352,18 +352,25 @@ Portal steps:
 1. Create `infra/` folder.
 2. Add Bicep or Terraform files:
    - `infra/main.bicep`
+   - `infra/storage.bicep`
+   - `infra/keyvault.bicep`
    - `infra/vnet.bicep`
+   - `infra/firewall.bicep`
    - `infra/appservice.bicep`
    - `infra/functions.bicep`
-   - `infra/apim.bicep`
-   - `infra/firewall.bicep`
    - `infra/monitoring.bicep`
+   - `infra/apim.bicep`
+   - `infra/private-endpoint.bicep`
+   - `infra/deployment-slot.bicep`
+   - `infra/apim-policy.xml`
 3. Create GitHub Actions workflows:
    - `.github/workflows/ci.yml`
    - `.github/workflows/cd.yml`
-4. Add deployment scripts:
+4. Add deployment and test scripts:
    - `scripts/deploy-infra.ps1`
    - `scripts/deploy-infra.sh`
+   - `scripts/run-tests.ps1`
+   - `scripts/run-tests.sh`
 
 CLI commands:
 ```bash
@@ -379,6 +386,7 @@ GitHub Actions example:
 - Deploy Functions package
 - Deploy ARM/Bicep template
 - Run smoke tests
+- Validate documentation and infrastructure artifacts
 
 ### Optional Phase 7: Add container and AKS support
 - Add `Dockerfile` for frontend or backend.

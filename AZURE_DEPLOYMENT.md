@@ -45,20 +45,78 @@ App Service is connected to VNet and uses private endpoints for sensitive servic
 
 ---
 
-## Prerequisites
+## Guidance: WAF + Load Balancer vs App Service / APIM
 
-- Azure subscription
-- Azure CLI installed and signed in
-- Node.js installed locally
-- Azure Functions Core Tools installed locally
-- Basic knowledge of App Service, Function App, and VNet concepts
-- Access to the Azure Portal and a browser
+Use this guidance when you choose between direct App Service/APIM hosting and a hardened edge architecture.
 
-```bash
-az login
-az account set --subscription "<your-subscription-id>"
-az --version
-```
+- App Service + APIM:
+  - Best for small-to-medium web apps and APIs.
+  - APIM handles API gateway, routing, authentication, and rate limiting.
+  - App Service provides built-in autoscale and platform resilience.
+  - Use WAF only if the public frontend or APIs need stronger edge protection.
+
+- Azure Application Gateway + WAF:
+  - Best when you need centralized HTTP/S inspection, OWASP protection, and URL-based routing.
+  - Use WAF in front of App Service / APIM when you want policy inspection before backend traffic reaches your application.
+  - Recommended for custom TLS termination, bot protection, and dedicated web security rules.
+
+- Azure Load Balancer:
+  - Best for Layer-4 traffic distribution to VMs, AKS nodes, or private IP-based backends.
+  - Not required for App Service or APIM in most cases, because those services already provide multi-instance scaling and built-in front-end routing.
+  - Use a Load Balancer only when you add VM/AKS workloads or need non-HTTP TCP/UDP distribution.
+
+- Service Endpoints vs Private Endpoints:
+  - Prefer Private Endpoints / Private Link for PaaS resource isolation and stronger security.
+  - Service Endpoints are simpler but do not provide private IP access to the resource.
+  - If you already use Private Endpoints, Service Endpoints are usually unnecessary.
+  - Implement Service Endpoints only when Private Endpoints are unavailable or when you need a simpler VNet-to-service path.
+
+   - Implement Service Endpoints only when Private Endpoints are unavailable or when you need a simpler VNet-to-service path.
+
+  **App Gateway: Health Probe & TLS guidance**
+
+  - Health probe: configure a lightweight probe that checks `/api/health` or `/health` on the backend. Keep the probe path fast and idempotent.
+
+  - Bicep (conceptual) probe snippet:
+
+  ```bicep
+  # conceptual snippet
+  applicationGatewayProbes: [
+    {
+      name: 'backendProbe'
+      properties: {
+        protocol: 'Https'
+        path: '/api/health'
+        interval: 30
+        timeout: 30
+        unhealthyThreshold: 3
+      }
+    }
+  ]
+  ```
+
+  - TLS certificates: prefer storing PFX certificates in Key Vault and grant the Application Gateway a managed identity with access to the Key Vault secret. Alternatively, use Azure-managed certificates where supported.
+
+  - Backend TLS considerations: ensure App Service backends use HTTPS, enable `pickHostNameFromBackendAddress` on the gateway to preserve host headers, and either use publicly trusted certs on the backend or add trusted root certificates to the gateway configuration for private/back-end certificates.
+
+  **Note (Bicep validation):** When compiling these modules you may see linter warnings such as `BCP187` (e.g., "property 'sku' does not exist in the resource or type definition"). This is usually a schema metadata warning from the local Bicep type definitions; the resource API version used is valid. To eliminate the warning you can update to a matching API version, report the type issue to Microsoft, or ignore the warning after manual verification.
+
+  ---
+
+  ## Prerequisites
+
+  - Azure subscription
+  - Azure CLI installed and signed in
+  - Node.js installed locally
+  - Azure Functions Core Tools installed locally
+  - Basic knowledge of App Service, Function App, and VNet concepts
+  - Access to the Azure Portal and a browser
+
+  ```bash
+  az login
+  az account set --subscription "<your-subscription-id>"
+  az --version
+  ```
 
 ---
 
@@ -235,6 +293,13 @@ Portal steps:
 4. Create Azure API Management.
 5. Import the Function App APIs into APIM.
 6. Apply APIM policies for CORS, JWT validation, and rate limiting.
+7. Use `infra/apim-policy.xml` as a starting point for APIM inbound policy configuration.
+
+### Phase 4: Add Infrastructure as Code
+1. Use `infra/main.bicep` and the module files to deploy the platform.
+2. Use `scripts/deploy-infra.ps1` or `scripts/deploy-infra.sh` for deployment automation.
+3. Use `scripts/run-tests.ps1` or `scripts/run-tests.sh` to validate the backend.
+4. Use GitHub Actions workflows in `.github/workflows/ci.yml` and `.github/workflows/cd.yml`.
 
 CLI commands:
 ```bash
@@ -356,6 +421,44 @@ Portal steps:
 - Associate route table to workload subnets only.
 - Private endpoint > create for Key Vault/Storage.
 - Private DNS zone > add zone and virtual network link.
+
+### Layer-4 troubleshooting guide
+Use the following checks when connectivity fails at the transport/network level.
+
+1. Identify the failing flow.
+   - Determine source IP, destination IP, destination port, protocol, and application path.
+   - For App Service or Function App, use the resolved outbound IP and backend host name.
+2. Verify NSG rules.
+   - Check inbound and outbound rules for the source and destination subnet.
+   - Use `az network nsg rule list` and `az network watcher show-effective-route`.
+   - Confirm there is no deny rule with higher priority blocking port 80/443 or service ports.
+3. Validate UDR and routing.
+   - Confirm subnets with forced tunneling point to Azure Firewall or next hop.
+   - Use `az network route-table route list` and `az network watcher show-effective-route --location eastus --resource-id <subnet-resource-id>`.
+   - Ensure there are no blackhole routes or overlapping prefixes.
+4. Check Azure Firewall and firewall policies.
+   - Review network rules for TCP/UDP on the target port.
+   - Verify DNAT rules if using gateway or private endpoints.
+   - Use Azure Firewall logs in Log Analytics to inspect denied flows and application rule matches.
+5. Validate private endpoints / private link.
+   - Confirm private endpoint approval state is `Approved`.
+   - Check `nslookup`/`dig` against the private DNS zone to ensure the PaaS resource resolves to a private IP.
+   - Validate the private endpoint network interface is connected to the expected subnet.
+6. Test connectivity from within the VNet.
+   - Use Azure Bastion, a jump VM, or `appservice remote-connection` to test TCP connectivity.
+   - For Linux VMs: `nc -vz <destination-ip> <port>` or `curl -v telnet://<host>:<port>`.
+7. Verify load balancer and public IP paths.
+   - If a public IP or Azure Load Balancer is involved, confirm the backend pool health probes succeed.
+   - Use `az network lb probe show` and `az network lb rule list` to inspect configuration.
+8. Confirm DNS and TLS dependencies.
+   - Ensure private DNS resolves the target host to the right private IP and there are no split-horizon conflicts.
+   - For TLS handshake failures, check SNI and certificate binding separately from L4 connectivity.
+9. Review packet flow using Azure Network Watcher.
+   - Use `az network watcher packet-capture` to capture packets on the relevant VM or subnet.
+   - Use `az network watcher flow-log show` to validate traffic flow through NSGs and the firewall.
+10. Apply a structured root cause process.
+   - Start with reachability (ping/TCP connect), then route/ACL, then service-specific firewall policies.
+   - Document the source, destination, transport port, and whether the failure is dropped, rejected, or timed out.
 
 ### Phase 2: Deploy the frontend to App Service
 1. Create App Service plan and web app.
@@ -550,6 +653,41 @@ Pipeline steps:
 - Deploy functions to Function App.
 - Deploy infrastructure template.
 - Run end-to-end smoke tests.
+
+### GitHub OIDC setup for Azure deployment
+1. In Azure AD, create an App Registration for GitHub Actions.
+2. Under "Expose an API", add an Application ID URI if needed.
+3. Under "Certificates & secrets", skip client secrets for OIDC.
+4. Under "Token configuration", add optional groups or roles if required.
+5. In GitHub, go to repository Settings > Security > OpenID Connect providers.
+6. Create a new federated credential:
+   - Issuer: `https://token.actions.githubusercontent.com`
+   - Subject: `repo:<org>/<repo>:ref:refs/heads/main`
+   - Audience: `api://AzureADTokenExchange`
+7. Grant the app registration RBAC permissions on the target subscription or resource group:
+   - Contributor or a narrower custom role as needed.
+8. Add these secrets to GitHub:
+   - `AZURE_TENANT_ID`
+   - `AZURE_SUBSCRIPTION_ID`
+   - `AZURE_CLIENT_ID`
+   - `AZURE_RESOURCE_GROUP`
+   - `AZURE_APP_NAME`
+   - `AZURE_FUNCTIONAPP_NAME`
+   - `AZURE_CREDENTIALS` (optional fallback)
+
+Optional fallback:
+- If OIDC is not yet ready, keep `AZURE_CREDENTIALS` as a service principal JSON secret and use it temporarily.
+- Prefer OIDC for short-lived credentials and fewer secret management requirements.
+
+Generate `AZURE_CREDENTIALS` with Azure CLI:
+```bash
+az ad sp create-for-rbac \
+  --name "github-actions-swarity" \
+  --role contributor \
+  --scopes /subscriptions/<subscription-id> \
+  --sdk-auth
+```
+Copy the JSON output and save it as the GitHub secret `AZURE_CREDENTIALS`.
 
 ### Optional Phase 7: Add AKS and container support
 - Build a `Dockerfile` for frontend or backend.

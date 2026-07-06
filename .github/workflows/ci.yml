@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install dependencies
+        working-directory: functions
+        run: npm install
+      - name: Run backend tests
+        run: npm test
+        working-directory: functions
+  validate-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate README exists
+        run: test -f README.md && echo "README exists"
+      - name: Validate Azure docs exists
+        run: test -f AZURE_DEPLOYMENT.md && echo "AZURE_DEPLOYMENT exists"

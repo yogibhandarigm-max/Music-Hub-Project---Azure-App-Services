@@ -1,9 +1,7 @@
-const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const { createUser, getUserByEmail } = require('../db');
 
-function hashPassword(password) {
-  return crypto.createHash('sha256').update(password).digest('hex');
-}
+const SALT_ROUNDS = 10;
 
 module.exports = async function (context, req) {
   const { firstName, lastName, email, password, role } = req.body || {};
@@ -25,7 +23,7 @@ module.exports = async function (context, req) {
     return;
   }
 
-  const passwordHash = hashPassword(password);
+  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
   await createUser({
     partitionKey: 'USER',

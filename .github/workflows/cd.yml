@@ -1,0 +1,46 @@
+name: CD
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to Azure with OIDC
+        if: ${{ secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' }}
+        uses: azure/login@v1
+        with:
+          oidc: true
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Login to Azure with service principal fallback
+        if: ${{ secrets.AZURE_CLIENT_ID == '' || secrets.AZURE_TENANT_ID == '' || secrets.AZURE_SUBSCRIPTION_ID == '' }}
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Build frontend package
+        run: |
+          zip -r swarity-frontend.zip . -x "*.git*" "*.env*" "node_modules/*" "functions/*" "infra/*" "scripts/*" "tests/*"
+      - name: Deploy frontend to App Service
+        run: |
+          az webapp deployment source config-zip \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --name ${{ secrets.AZURE_APP_NAME }} \
+            --src swarity-frontend.zip
+      - name: Deploy Functions app code
+        run: |
+          cd functions
+          zip -r ../swarity-functions.zip . -x "node_modules/*"
+          az functionapp deployment source config-zip \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --name ${{ secrets.AZURE_FUNCTIONAPP_NAME }} \
+            --src ../swarity-functions.zip
+      - name: Deploy infrastructure Bicep
+        run: |
+          az deployment group create \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --template-file infra/main.bicep \
+            --parameters @infra/parameters.json

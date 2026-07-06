@@ -1,2 +1,13 @@
 # Ignore local config with API keys
 config.js
+
+# Node / build artifacts
+node_modules/
+functions/node_modules/
+*.zip
+
+# Local IDE files
+.vscode/
+
+# Secrets and environment files
+*.env
