@@ -45,6 +45,253 @@ App Service is connected to VNet and uses private endpoints for sensitive servic
 
 ---
 
+## Implementation Checklist
+
+Follow these implementation phases in order. Each phase includes portal steps and CLI commands so you can practice both approaches.
+
+### Phase 1: Build the Azure Functions backend
+1. Create a `functions/` folder in the project.
+2. Add these files:
+   - `functions/host.json`
+   - `functions/local.settings.json`
+   - `functions/login/function.json`
+   - `functions/login/index.js`
+   - `functions/signup/function.json`
+   - `functions/signup/index.js`
+   - `functions/trending/function.json`
+   - `functions/trending/index.js`
+3. Initialize and run locally:
+   ```bash
+   cd functions
+   npm install -g azure-functions-core-tools@4
+   func init . --javascript
+   func new --name login --template "HTTP trigger" --authlevel anonymous
+   func new --name signup --template "HTTP trigger" --authlevel anonymous
+   func new --name trending --template "HTTP trigger" --authlevel anonymous
+   func start
+   ```
+4. Test in browser or Postman:
+   - `http://localhost:7071/api/login`
+   - `http://localhost:7071/api/signup`
+   - `http://localhost:7071/api/trending`
+
+Portal steps:
+- Azure Portal > Create a resource > Function App.
+- Runtime stack: Node 18.
+- Publish: Code.
+- Create Storage account.
+- Deploy functions from VS Code or ZIP.
+- Configure App Settings for your backend.
+
+### Phase 2: Deploy the frontend to App Service
+1. Create App Service plan and web app.
+2. Zip deploy the site.
+3. Enable HTTPS-only.
+
+CLI commands:
+```bash
+az appservice plan create \
+  --name swarity-plan \
+  --resource-group swarity-rg \
+  --sku B1 \
+  --is-linux
+
+az webapp create \
+  --resource-group swarity-rg \
+  --plan swarity-plan \
+  --name swarity-app \
+  --runtime "NODE|18-lts"
+
+zip -r swarity-frontend.zip . -x "*.git*" "*.env*"
+az webapp deployment source config-zip \
+  --resource-group swarity-rg \
+  --name swarity-app \
+  --src swarity-frontend.zip
+
+az webapp update \
+  --resource-group swarity-rg \
+  --name swarity-app \
+  --https-only true
+```
+
+Portal steps:
+- App Service > Create > select `swarity-rg`.
+- Choose a unique app name.
+- Use Node 18 runtime.
+- Deployment Center > Zip Deploy.
+- TLS/SSL settings > HTTPS Only.
+
+### Phase 3: Add API Management
+1. Create an APIM instance.
+2. Import your Function App APIs.
+3. Configure policies and CORS.
+
+CLI commands:
+```bash
+az apim create \
+  --name swarity-apim \
+  --resource-group swarity-rg \
+  --publisher-email admin@swarity.com \
+  --publisher-name Swarity \
+  --sku Developer \
+  --location eastus
+
+az apim api import \
+  --resource-group swarity-rg \
+  --service-name swarity-apim \
+  --path swarity-api \
+  --display-name "Swarity API" \
+  --api-id swarity-api \
+  --specification-format OpenApi \
+  --specification-path "https://<function-app>.azurewebsites.net/api/swagger.json"
+```
+
+Portal steps:
+- APIM > Create.
+- APIs > Add API > Function App.
+- Select your Function App and import APIs.
+- Add CORS policy to allow App Service origin.
+- Add throttling or JWT validation policy.
+
+### Phase 4: Add networking and security
+1. Create VNet and subnets:
+   - `app-subnet`
+   - `func-subnet`
+   - `private-subnet`
+   - `AzureFirewallSubnet`
+2. Create NSGs and attach them to workload subnets.
+3. Create Azure Firewall and Firewall Policy.
+4. Create UDR and route to the firewall private IP.
+5. Create Private Endpoints and Private DNS.
+
+CLI commands:
+```bash
+az network vnet create \
+  --resource-group swarity-rg \
+  --name swarity-vnet \
+  --address-prefix 10.0.0.0/16 \
+  --subnet-name app-subnet \
+  --subnet-prefix 10.0.1.0/24
+
+az network vnet subnet create \
+  --resource-group swarity-rg \
+  --vnet-name swarity-vnet \
+  --name func-subnet \
+  --address-prefix 10.0.2.0/24
+
+az network vnet subnet create \
+  --resource-group swarity-rg \
+  --vnet-name swarity-vnet \
+  --name private-subnet \
+  --address-prefix 10.0.3.0/24
+
+az network vnet subnet create \
+  --resource-group swarity-rg \
+  --vnet-name swarity-vnet \
+  --name AzureFirewallSubnet \
+  --address-prefix 10.0.4.0/26
+
+az network nsg create --resource-group swarity-rg --name swarity-app-nsg
+az network nsg create --resource-group swarity-rg --name swarity-func-nsg
+
+az network firewall policy create \
+  --resource-group swarity-rg \
+  --name swarity-fwpolicy
+
+az network firewall create \
+  --resource-group swarity-rg \
+  --name swarity-firewall \
+  --location eastus \
+  --sku AZFW_VNet \
+  --vnet-name swarity-vnet \
+  --public-ip-address swarity-fw-pip \
+  --firewall-policy swarity-fwpolicy
+```
+
+Portal steps:
+- VNet > Create or edit > add subnets.
+- Add a subnet named `AzureFirewallSubnet` with purpose `Azure Firewall`.
+- Create NSGs and attach to `app-subnet` and `func-subnet`.
+- Firewall Policy > create rules for HTTP/HTTPS/DNS.
+- Firewall > create and associate with VNet and Firewall Policy.
+- Route table > create and add route to firewall private IP.
+- Associate route table to workload subnets only.
+- Private endpoint > create for Key Vault/Storage.
+- Private DNS zone > add zone and virtual network link.
+
+### Phase 5: Add monitoring and observability
+1. Create Application Insights and Log Analytics.
+2. Enable App Insights on App Service and Function App.
+3. Create alerts and dashboards.
+
+CLI commands:
+```bash
+az monitor log-analytics workspace create \
+  --resource-group swarity-rg \
+  --workspace-name swarity-law \
+  --location eastus
+
+az monitor app-insights component create \
+  --app swarity-ai \
+  --location eastus \
+  --resource-group swarity-rg \
+  --application-type web
+
+az webapp config appsettings set \
+  --resource-group swarity-rg \
+  --name swarity-app \
+  --settings APPINSIGHTS_INSTRUMENTATIONKEY="<key>"
+
+az functionapp config appsettings set \
+  --resource-group swarity-rg \
+  --name swarity-functions \
+  --settings APPINSIGHTS_INSTRUMENTATIONKEY="<key>"
+```
+
+Portal steps:
+- Create Application Insights resource.
+- App Service > Settings > Application Insights > Enable.
+- Function App > Settings > Application Insights > Enable.
+- Monitor > Alerts > New alert rule.
+- Verify with Live Metrics and Log Analytics queries.
+
+### Phase 6: Add IaC and DevOps automation
+1. Create `infra/` folder.
+2. Add Bicep or Terraform definitions for all resources.
+3. Add GitHub Actions workflows for CI/CD.
+4. Add deployment scripts.
+
+CLI commands:
+```bash
+az deployment group create \
+  --resource-group swarity-rg \
+  --template-file infra/main.bicep \
+  --parameters @infra/parameters.json
+```
+
+Pipeline steps:
+- Checkout code.
+- Build and lint frontend.
+- Deploy static site to App Service.
+- Deploy functions to Function App.
+- Deploy infrastructure template.
+- Run end-to-end smoke tests.
+
+### Optional Phase 7: Add AKS and container support
+- Build a `Dockerfile` for frontend or backend.
+- Push image to ACR.
+- Create AKS cluster.
+- Deploy containers and ingress.
+- Add Azure Application Gateway or WAF.
+
+Portal steps:
+- Create ACR.
+- Build and push container image.
+- Create AKS cluster.
+- Configure ingress and DNS.
+
+---
+
 ## 1. Prerequisites
 
 - Azure subscription

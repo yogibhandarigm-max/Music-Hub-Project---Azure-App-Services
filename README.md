@@ -74,6 +74,257 @@ For security, passwords must contain:
 3. Navigate through the pages using the menu
 4. Test the login and sign-up forms with validation
 
+## Implementation Roadmap
+
+This project can be extended in phases to learn Azure services, networking, security, monitoring, and deployment automation. Follow the steps below in order, and repeat them manually in the Azure portal and with CLI commands.
+
+### Phase 1: Add a local Azure Functions backend
+1. Create `functions/` folder at project root.
+2. Add function files:
+   - `functions/login/index.js`
+   - `functions/login/function.json`
+   - `functions/signup/index.js`
+   - `functions/signup/function.json`
+   - `functions/trending/index.js`
+   - `functions/trending/function.json`
+   - `functions/local.settings.json`
+   - `functions/host.json`
+3. Initialize Functions locally:
+   ```bash
+   cd functions
+   npm install -g azure-functions-core-tools@4
+   func init . --javascript
+   func new --name login --template "HTTP trigger" --authlevel anonymous
+   func new --name signup --template "HTTP trigger" --authlevel anonymous
+   func new --name trending --template "HTTP trigger" --authlevel anonymous
+   func start
+   ```
+4. Test locally:
+   - `http://localhost:7071/api/login`
+   - `http://localhost:7071/api/signup`
+   - `http://localhost:7071/api/trending`
+5. Update frontend calls in `index.html` or add `config.js` with `window.API_BASE_URL`.
+
+Manual portal steps:
+- Open Azure Portal > Create a resource > Function App.
+- Runtime stack: Node 18 (or Python).
+- Publish: Code.
+- Operating System: Windows or Linux.
+- Create a new Storage account.
+- Set `Application Insights` to Off or create later.
+- Deploy using VS Code or ZIP deploy.
+- Configure App Settings: `FUNCTIONS_EXTENSION_VERSION=~4`, `WEBSITE_RUN_FROM_PACKAGE=1`, and any custom API settings.
+
+### Phase 2: Deploy the frontend to App Service
+1. Create `appservice-settings.json` or a deployment script.
+2. Deploy the static site to App Service.
+3. Enable HTTPS-only and managed identity if required.
+
+CLI commands:
+```bash
+az webapp create \
+  --resource-group swarity-rg \
+  --plan swarity-plan \
+  --name swarity-app \
+  --runtime "NODE|18-lts"
+
+zip -r swarity-frontend.zip . -x "*.git*" "*.env*"
+az webapp deployment source config-zip \
+  --resource-group swarity-rg \
+  --name swarity-app \
+  --src swarity-frontend.zip
+
+az webapp update \
+  --resource-group swarity-rg \
+  --name swarity-app \
+  --https-only true
+```
+Portal steps:
+- Navigate to App Service > Create.
+- Select Resource Group: `swarity-rg`.
+- Create App Service Plan: `swarity-plan`.
+- Runtime stack: Node 18.
+- After creation, go to Deployment Center > Local Git or Zip Deploy.
+- Go to TLS/SSL settings > HTTPS Only = On.
+
+### Phase 3: Add API Management (APIM)
+1. Create APIM service.
+2. Import the Function App APIs.
+3. Add CORS, rate limit, and authorization policies.
+
+CLI commands:
+```bash
+az apim create \
+  --name swarity-apim \
+  --resource-group swarity-rg \
+  --publisher-email admin@swarity.com \
+  --publisher-name Swarity \
+  --sku Developer \
+  --location eastus
+
+az apim api import \
+  --resource-group swarity-rg \
+  --service-name swarity-apim \
+  --path swarity-api \
+  --display-name "Swarity API" \
+  --api-id swarity-api \
+  --specification-format Swagger \
+  --specification-path "https://<function-app>.azurewebsites.net/api/swagger.json"
+```
+Portal steps:
+- Create APIM service in Azure Portal.
+- Open APIM > APIs > Add API > Function App.
+- Select Function App and import `login`, `signup`, `trending` APIs.
+- Set CORS policy to allow your App Service domain.
+- Add rate-limit policy if desired.
+
+### Phase 4: Add Azure networking and security
+1. Create `swarity-vnet` and subnets:
+   - `app-subnet`
+   - `func-subnet`
+   - `private-subnet`
+   - `AzureFirewallSubnet`
+2. Create NSGs and attach them to workload subnets.
+3. Create Azure Firewall + Firewall Policy.
+4. Create `swarity-udr` and route to firewall private IP.
+5. Create Private Endpoints for Key Vault and Storage.
+6. Create Private DNS zone for internal resolution.
+
+CLI commands:
+```bash
+az network vnet create \
+  --resource-group swarity-rg \
+  --name swarity-vnet \
+  --address-prefix 10.0.0.0/16 \
+  --subnet-name app-subnet \
+  --subnet-prefix 10.0.1.0/24
+
+az network vnet subnet create \
+  --resource-group swarity-rg \
+  --vnet-name swarity-vnet \
+  --name func-subnet \
+  --address-prefix 10.0.2.0/24
+
+az network vnet subnet create \
+  --resource-group swarity-rg \
+  --vnet-name swarity-vnet \
+  --name private-subnet \
+  --address-prefix 10.0.3.0/24
+
+az network vnet subnet create \
+  --resource-group swarity-rg \
+  --vnet-name swarity-vnet \
+  --name AzureFirewallSubnet \
+  --address-prefix 10.0.4.0/26
+
+az network nsg create --resource-group swarity-rg --name swarity-app-nsg
+az network nsg create --resource-group swarity-rg --name swarity-func-nsg
+
+az network firewall policy create \
+  --resource-group swarity-rg \
+  --name swarity-fwpolicy
+
+az network firewall create \
+  --resource-group swarity-rg \
+  --name swarity-firewall \
+  --location eastus \
+  --sku AZFW_VNet \
+  --vnet-name swarity-vnet \
+  --public-ip-address swarity-fw-pip \
+  --firewall-policy swarity-fwpolicy
+```
+Portal steps:
+- Create Virtual Network > `swarity-vnet`.
+- Add subnets and set `AzureFirewallSubnet` purpose.
+- Create NSGs and attach to `app-subnet` and `func-subnet`.
+- Create Firewall Policy > add rules for HTTP/HTTPS/DNS.
+- Create Azure Firewall > attach `swarity-vnet` and select policy.
+- Create Route table > add route `0.0.0.0/0` to firewall private IP.
+- Associate route table with `app-subnet` and `func-subnet` only.
+- Create Private Endpoint for Key Vault/Storage and add Private DNS zone.
+
+### Phase 5: Add monitoring and observability
+1. Create App Insights and Log Analytics.
+2. Enable Application Insights for App Service and Function App.
+3. Add alerts for failures, performance, and availability.
+
+CLI commands:
+```bash
+az monitor log-analytics workspace create \
+  --resource-group swarity-rg \
+  --workspace-name swarity-law \
+  --location eastus
+
+az monitor app-insights component create \
+  --app swarity-ai \
+  --location eastus \
+  --resource-group swarity-rg \
+  --application-type web
+
+az webapp config appsettings set \
+  --resource-group swarity-rg \
+  --name swarity-app \
+  --settings APPINSIGHTS_INSTRUMENTATIONKEY="<key>" \
+              APPLICATIONINSIGHTS_CONNECTION_STRING="<connection-string>"
+
+az functionapp config appsettings set \
+  --resource-group swarity-rg \
+  --name swarity-functions \
+  --settings APPINSIGHTS_INSTRUMENTATIONKEY="<key>"
+```
+Portal steps:
+- Create Application Insights resource.
+- Open App Service > Application Insights > Enable.
+- Open Function App > Application Insights > Enable.
+- Create alerts in Monitor > Alerts > New alert rule.
+- Use Live Metrics and Log Analytics queries to verify telemetry.
+
+### Phase 6: Add Infrastructure as Code and DevOps
+1. Create `infra/` folder.
+2. Add Bicep or Terraform files:
+   - `infra/main.bicep`
+   - `infra/vnet.bicep`
+   - `infra/appservice.bicep`
+   - `infra/functions.bicep`
+   - `infra/apim.bicep`
+   - `infra/firewall.bicep`
+   - `infra/monitoring.bicep`
+3. Create GitHub Actions workflows:
+   - `.github/workflows/ci.yml`
+   - `.github/workflows/cd.yml`
+4. Add deployment scripts:
+   - `scripts/deploy-infra.ps1`
+   - `scripts/deploy-infra.sh`
+
+CLI commands:
+```bash
+az deployment group create \
+  --resource-group swarity-rg \
+  --template-file infra/main.bicep \
+  --parameters @infra/parameters.json
+```
+
+GitHub Actions example:
+- Build static site
+- Zip deploy App Service
+- Deploy Functions package
+- Deploy ARM/Bicep template
+- Run smoke tests
+
+### Optional Phase 7: Add container and AKS support
+- Add `Dockerfile` for frontend or backend.
+- Create AKS cluster and ACR.
+- Deploy container image to AKS.
+- Add Application Gateway or ingress controller.
+
+Manual portal steps:
+- Create ACR, build image.
+- Create AKS cluster.
+- Configure ingress and DNS.
+- Connect to ACR from AKS.
+
+---
+
 ## YouTube Trending Sync (optional)
 
 The home page can automatically sync the `Trending Now` section from YouTube Music using the YouTube Data API v3. The feed is configured for India-only trending music.
