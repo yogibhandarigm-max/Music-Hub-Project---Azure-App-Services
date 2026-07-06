@@ -78,18 +78,18 @@ For security, passwords must contain:
 
 This project can be extended in phases to learn Azure services, networking, security, monitoring, and deployment automation. Follow the steps below in order, and repeat them manually in the Azure portal and with CLI commands.
 
+### Prerequisites for Phase 1
+- Azure subscription and a resource group (for example, `swarity-rg`).
+- Node.js installed locally.
+- Azure CLI installed and signed in.
+- Azure Functions Core Tools installed locally.
+- Visual Studio Code with the Azure Functions extension (optional but recommended).
+
+If you have no Azure resources yet, first create the resource group and storage account before creating the Function App.
+
 ### Phase 1: Add a local Azure Functions backend
-1. Create `functions/` folder at project root.
-2. Add function files:
-   - `functions/login/index.js`
-   - `functions/login/function.json`
-   - `functions/signup/index.js`
-   - `functions/signup/function.json`
-   - `functions/trending/index.js`
-   - `functions/trending/function.json`
-   - `functions/local.settings.json`
-   - `functions/host.json`
-3. Initialize Functions locally:
+1. Create a `functions/` folder at project root.
+2. Initialize the Functions project and create the functions. The CLI will generate the required files automatically:
    ```bash
    cd functions
    npm install -g azure-functions-core-tools@4
@@ -97,23 +97,78 @@ This project can be extended in phases to learn Azure services, networking, secu
    func new --name login --template "HTTP trigger" --authlevel anonymous
    func new --name signup --template "HTTP trigger" --authlevel anonymous
    func new --name trending --template "HTTP trigger" --authlevel anonymous
+   ```
+3. The commands above will create:
+   - `functions/host.json`
+   - `functions/local.settings.json`
+   - `functions/login/function.json`
+   - `functions/login/index.js`
+   - `functions/signup/function.json`
+   - `functions/signup/index.js`
+   - `functions/trending/function.json`
+   - `functions/trending/index.js`
+4. Replace the generated placeholder code with real logic. Example content:
+   `functions/login/index.js`
+   ```js
+   module.exports = async function (context, req) {
+     const { email, password } = req.body || {};
+     if (!email || !password) {
+       context.res = {
+         status: 400,
+         body: { error: 'Email and password are required.' }
+       };
+       return;
+     }
+     context.res = {
+       status: 200,
+       body: {
+         message: 'Login successful',
+         user: { email }
+       }
+     };
+   };
+   ```
+   `functions/login/function.json`
+   ```json
+   {
+     "bindings": [
+       {
+         "authLevel": "anonymous",
+         "type": "httpTrigger",
+         "direction": "in",
+         "name": "req",
+         "methods": ["post"]
+       },
+       {
+         "type": "http",
+         "direction": "out",
+         "name": "res"
+       }
+     ]
+   }
+   ```
+5. Add similar content for `signup` and `trending` functions:
+   - `signup` returns a mock new user object.
+   - `trending` returns sample trending songs or forwards data from YouTube.
+6. Run locally:
+   ```bash
    func start
    ```
-4. Test locally:
+7. Test locally:
    - `http://localhost:7071/api/login`
    - `http://localhost:7071/api/signup`
    - `http://localhost:7071/api/trending`
-5. Update frontend calls in `index.html` or add `config.js` with `window.API_BASE_URL`.
+8. Update frontend calls in `index.html` or add `config.js` with `window.API_BASE_URL`.
 
 Manual portal steps:
-- Open Azure Portal > Create a resource > Function App.
-- Runtime stack: Node 18 (or Python).
+- Create a Function App in Azure Portal.
+- Runtime stack: Node 18.
 - Publish: Code.
 - Operating System: Windows or Linux.
-- Create a new Storage account.
+- Create or reuse a Storage account.
 - Set `Application Insights` to Off or create later.
-- Deploy using VS Code or ZIP deploy.
-- Configure App Settings: `FUNCTIONS_EXTENSION_VERSION=~4`, `WEBSITE_RUN_FROM_PACKAGE=1`, and any custom API settings.
+- Deploy from VS Code or ZIP deploy.
+- Configure App Settings: `FUNCTIONS_EXTENSION_VERSION=~4`, `WEBSITE_RUN_FROM_PACKAGE=1`, and any other app settings.
 
 ### Phase 2: Deploy the frontend to App Service
 1. Create `appservice-settings.json` or a deployment script.

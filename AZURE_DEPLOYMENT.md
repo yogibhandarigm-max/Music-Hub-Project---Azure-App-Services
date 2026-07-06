@@ -45,13 +45,96 @@ App Service is connected to VNet and uses private endpoints for sensitive servic
 
 ---
 
+## Prerequisites
+
+- Azure subscription
+- Azure CLI installed and signed in
+- Node.js installed locally
+- Azure Functions Core Tools installed locally
+- Basic knowledge of App Service, Function App, and VNet concepts
+- Access to the Azure Portal and a browser
+
+```bash
+az login
+az account set --subscription "<your-subscription-id>"
+az --version
+```
+
+---
+
+## 1. Create the Core Resource Group
+
+### Azure Portal GUI Steps
+1. Open the Azure portal.
+2. Go to Resource groups.
+3. Click Create.
+4. Enter name: swarity-rg.
+5. Select a region such as East US.
+6. Click Review + create, then Create.
+
+```bash
+az group create --name swarity-rg --location eastus
+```
+
+---
+
+## 2. Create a VNet and Required Subnets
+
+### Azure Portal GUI Steps
+1. In the portal, search for Virtual networks.
+2. Click Create.
+3. Choose the resource group swarity-rg.
+4. Name the VNet swarity-vnet.
+5. Set the address space to 10.0.0.0/16.
+6. Add subnets:
+   - app-subnet: 10.0.1.0/24
+   - func-subnet: 10.0.2.0/24
+   - private-subnet: 10.0.3.0/24
+7. Click Review + create.
+
+This project should use a private network for production readiness.
+
+```bash
+az network vnet create \
+  --resource-group swarity-rg \
+  --name swarity-vnet \
+  --address-prefix 10.0.0.0/16 \
+  --subnet-name app-subnet \
+  --subnet-prefix 10.0.1.0/24
+
+az network vnet subnet create \
+  --resource-group swarity-rg \
+  --vnet-name swarity-vnet \
+  --name func-subnet \
+  --address-prefix 10.0.2.0/24
+
+az network vnet subnet create \
+  --resource-group swarity-rg \
+  --vnet-name swarity-vnet \
+  --name private-subnet \
+  --address-prefix 10.0.3.0/24
+```
+
+---
+
 ## Implementation Checklist
+
+If you have no resources in Azure yet, start with the steps above to create your resource group and core network.
 
 Follow these implementation phases in order. Each phase includes portal steps and CLI commands so you can practice both approaches.
 
 ### Phase 1: Build the Azure Functions backend
 1. Create a `functions/` folder in the project.
-2. Add these files:
+2. Use Azure Functions Core Tools to initialize and scaffold the functions. The CLI creates the required files automatically:
+   ```bash
+   cd functions
+   npm install -g azure-functions-core-tools@4
+   func init . --javascript
+   func new --name login --template "HTTP trigger" --authlevel anonymous
+   func new --name signup --template "HTTP trigger" --authlevel anonymous
+   func new --name trending --template "HTTP trigger" --authlevel anonymous
+   ```
+3. The tools generate these files:
    - `functions/host.json`
    - `functions/local.settings.json`
    - `functions/login/function.json`
@@ -60,7 +143,55 @@ Follow these implementation phases in order. Each phase includes portal steps an
    - `functions/signup/index.js`
    - `functions/trending/function.json`
    - `functions/trending/index.js`
-3. Initialize and run locally:
+4. Replace the generated placeholder code with real logic. Example login function:
+   `functions/login/index.js`
+   ```js
+   module.exports = async function (context, req) {
+     const { email, password } = req.body || {};
+     if (!email || !password) {
+       context.res = {
+         status: 400,
+         body: { error: 'Email and password are required.' }
+       };
+       return;
+     }
+     context.res = {
+       status: 200,
+       body: {
+         message: 'Login successful',
+         user: { email }
+       }
+     };
+   };
+   ```
+   `functions/login/function.json`
+   ```json
+   {
+     "bindings": [
+       {
+         "authLevel": "anonymous",
+         "type": "httpTrigger",
+         "direction": "in",
+         "name": "req",
+         "methods": ["post"]
+       },
+       {
+         "type": "http",
+         "direction": "out",
+         "name": "res"
+       }
+     ]
+   }
+   ```
+5. Create similar mock content for `signup` and `trending` functions.
+6. Run locally:
+   ```bash
+   func start
+   ```
+7. Test locally:
+   - `http://localhost:7071/api/login`
+   - `http://localhost:7071/api/signup`
+   - `http://localhost:7071/api/trending`
    ```bash
    cd functions
    npm install -g azure-functions-core-tools@4
@@ -289,75 +420,6 @@ Portal steps:
 - Build and push container image.
 - Create AKS cluster.
 - Configure ingress and DNS.
-
----
-
-## 1. Prerequisites
-
-- Azure subscription
-- Azure CLI installed and signed in
-- Basic knowledge of App Service, Key Vault, and VNet concepts
-
-```bash
-az login
-az account set --subscription "<your-subscription-id>"
-az --version
-```
-
----
-
-## 2. Create the Core Resource Group
-
-### Azure Portal GUI Steps
-1. Open the Azure portal.
-2. Go to Resource groups.
-3. Click Create.
-4. Enter name: swarity-rg.
-5. Select a region such as East US.
-6. Click Review + create, then Create.
-
-```bash
-az group create --name swarity-rg --location eastus
-```
-
----
-
-## 3. Create a VNet and Required Subnets
-
-### Azure Portal GUI Steps
-1. In the portal, search for Virtual networks.
-2. Click Create.
-3. Choose the resource group swarity-rg.
-4. Name the VNet swarity-vnet.
-5. Set the address space to 10.0.0.0/16.
-6. Add subnets:
-   - app-subnet: 10.0.1.0/24
-   - func-subnet: 10.0.2.0/24
-   - private-subnet: 10.0.3.0/24
-7. Click Review + create.
-
-This project should use a private network for production readiness.
-
-```bash
-az network vnet create \
-  --resource-group swarity-rg \
-  --name swarity-vnet \
-  --address-prefix 10.0.0.0/16 \
-  --subnet-name app-subnet \
-  --subnet-prefix 10.0.1.0/24
-
-az network vnet subnet create \
-  --resource-group swarity-rg \
-  --vnet-name swarity-vnet \
-  --name func-subnet \
-  --address-prefix 10.0.2.0/24
-
-az network vnet subnet create \
-  --resource-group swarity-rg \
-  --vnet-name swarity-vnet \
-  --name private-subnet \
-  --address-prefix 10.0.3.0/24
-```
 
 ### Network Security Group (NSG)
 
