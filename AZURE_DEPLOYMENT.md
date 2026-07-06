@@ -128,14 +128,67 @@ az network nsg create \
   --name swarity-nsg
 ```
 
-### Route Table (UDR)
+### Route Table (UDR) and Azure Firewall
+
+### Important Deployment Order
+Create the Azure Firewall before creating the final user-defined route that points traffic to the firewall.
+
+The correct sequence is:
+
+1. Create or confirm the VNet address space.
+2. Create the required `AzureFirewallSubnet`.
+3. Optionally create `AzureFirewallManagementSubnet` only if using Firewall Management NIC or forced tunneling.
+4. Create the Azure Firewall Policy.
+5. Create the Azure Firewall and associate it with the VNet and Firewall Policy.
+6. After the firewall is deployed, copy the firewall private IP address.
+7. Create or update the route table.
+8. Add a route where the next hop is the Azure Firewall private IP.
+9. Associate the route table with workload subnets such as `app-subnet` and `func-subnet`.
+10. Create firewall policy rules to allow required outbound traffic.
+
+Do not associate the route table to `AzureFirewallSubnet`.
+
+---
+
+### Create the AzureFirewallSubnet
+
+### Azure Portal GUI Steps
+1. In the portal, open the existing virtual network.
+2. Click Subnets.
+3. Click Add subnet.
+4. In the Add subnet form, set Subnet purpose to `Azure Firewall`.
+5. Set the Name to `AzureFirewallSubnet`.
+6. Use a /26 or larger prefix, for example `10.0.4.0/26`.
+7. Click Save.
+
+```bash
+az network vnet subnet create \
+  --resource-group swarity-rg \
+  --vnet-name swarity-vnet \
+  --name AzureFirewallSubnet \
+  --address-prefix 10.0.4.0/26
+```
+
+### (Optional) Create AzureFirewallManagementSubnet
+
+Only required for firewall management NICs or forced tunneling scenarios.
+
+```bash
+az network vnet subnet create \
+  --resource-group swarity-rg \
+  --vnet-name swarity-vnet \
+  --name AzureFirewallManagementSubnet \
+  --address-prefix 10.0.5.0/26
+```
+
+### Create the Route Table
 
 ### Azure Portal GUI Steps
 1. Search for Route tables.
 2. Click Create.
 3. Name it swarity-udr.
 4. Select the resource group.
-5. Add a route pointing to the firewall or next hop appliance.
+5. Click Review + create.
 
 ```bash
 az network route-table create \
@@ -143,22 +196,90 @@ az network route-table create \
   --name swarity-udr
 ```
 
-### Azure Firewall
+### Create a Firewall Policy
+
+### Azure Portal GUI Steps
+1. Search for Firewall policies.
+2. Click Create.
+3. Name it swarity-fwpolicy.
+4. Select the resource group and region.
+5. Add rules to allow required outbound traffic (HTTP, HTTPS, DNS, etc.).
+6. Review + create.
+
+```bash
+az network firewall policy create \
+  --resource-group swarity-rg \
+  --name swarity-fwpolicy
+```
+
+### Create the Azure Firewall
 
 ### Azure Portal GUI Steps
 1. Search for Azure Firewall.
 2. Click Create.
 3. Choose the resource group and region.
-4. Create or use a public IP.
-5. Configure the firewall policy and associate it to the VNet.
+4. Create or use a public IP for the firewall.
+5. Associate the firewall with the VNet.
+6. Select the Firewall Policy.
+7. Click Review + create.
 
 ```bash
 az network firewall create \
   --resource-group swarity-rg \
   --name swarity-firewall \
   --location eastus \
-  --sku AZFW_VNet
+  --sku AZFW_VNet \
+  --vnet-name swarity-vnet \
+  --public-ip-address swarity-fw-pip \
+  --firewall-policy swarity-fwpolicy
 ```
+
+### Add a Route to the Firewall
+
+After the firewall is deployed, get its private IP address and configure the route table.
+
+```bash
+FIREWALL_PRIVATE_IP=$(az network firewall show \
+  --resource-group swarity-rg \
+  --name swarity-firewall \
+  --query "ipConfigurations[0].privateIpAddress" -o tsv)
+
+az network route-table route create \
+  --resource-group swarity-rg \
+  --route-table-name swarity-udr \
+  --name RouteToFirewall \
+  --address-prefix 0.0.0.0/0 \
+  --next-hop-type VirtualAppliance \
+  --next-hop-ip-address $FIREWALL_PRIVATE_IP
+```
+
+### Associate the Route Table with Workload Subnets
+
+Associate `swarty-udr` with `app-subnet` and `func-subnet`, but not with `AzureFirewallSubnet`.
+
+```bash
+az network vnet subnet update \
+  --resource-group swarity-rg \
+  --vnet-name swarity-vnet \
+  --name app-subnet \
+  --route-table swarity-udr
+
+az network vnet subnet update \
+  --resource-group swarity-rg \
+  --vnet-name swarity-vnet \
+  --name func-subnet \
+  --route-table swarity-udr
+```
+
+### Firewall Policy Rules
+
+Create explicit rules for any required outbound traffic to support the app, such as:
+
+- HTTP/HTTPS to external services
+- DNS to the chosen DNS resolver
+- Access to Azure service endpoints if needed
+
+This prevents the firewall from blocking legitimate application outbound traffic.
 
 ---
 
