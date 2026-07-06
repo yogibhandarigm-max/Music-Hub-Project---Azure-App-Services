@@ -1,6 +1,6 @@
-# MusicHub - Static Website
+# Swarity - Static Website
 
-A beautiful, responsive static website for a music industry platform with login and sign-up functionality.
+A beautiful, responsive static website for an international Indian music platform with login and sign-up functionality.
 
 ## Features
 
@@ -76,7 +76,7 @@ For security, passwords must contain:
 
 ## YouTube Trending Sync (optional)
 
-The home page can automatically sync the `Trending Now` section from YouTube Music using the YouTube Data API v3. To enable:
+The home page can automatically sync the `Trending Now` section from YouTube Music using the YouTube Data API v3. The feed is configured for India-only trending music.
 
 1. Get a YouTube Data API v3 key from Google Cloud Console.
 2. Copy `config.example.js` to `config.js` and replace `YOUR_KEY_HERE` with your API key.
@@ -175,7 +175,7 @@ For production use:
 
 You can customize:
 - Colors: Edit the gradient colors in `style.css` (currently using purple/blue)
-- Logo/Branding: Edit the "🎵 MusicHub" text in HTML files
+- Logo/Branding: Edit the "🎵 Swarity" text in HTML files
 - Content: Update text, features, and information in HTML files
 - Styling: Modify the CSS as needed
 
@@ -196,3 +196,4 @@ For issues or questions about deploying to Azure, refer to:
 - [Azure App Service Documentation](https://docs.microsoft.com/azure/app-service/)
 - [Azure Learning Path](https://learn.microsoft.com/training/paths/deploy-app-to-azure-app-service/)
 # Music-Hub-Project---Azure-App-Services
+

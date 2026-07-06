@@ -1,4 +1,4 @@
-# SoundWave - Azure Implementation Guide for This Project
+# Swarity - Azure Implementation Guide for This Project
 
 ## Purpose
 
@@ -65,12 +65,12 @@ az --version
 1. Open the Azure portal.
 2. Go to Resource groups.
 3. Click Create.
-4. Enter name: soundwave-rg.
+4. Enter name: swarity-rg.
 5. Select a region such as East US.
 6. Click Review + create, then Create.
 
 ```bash
-az group create --name soundwave-rg --location eastus
+az group create --name swarity-rg --location eastus
 ```
 
 ---
@@ -80,8 +80,8 @@ az group create --name soundwave-rg --location eastus
 ### Azure Portal GUI Steps
 1. In the portal, search for Virtual networks.
 2. Click Create.
-3. Choose the resource group soundwave-rg.
-4. Name the VNet soundwave-vnet.
+3. Choose the resource group swarity-rg.
+4. Name the VNet swarity-vnet.
 5. Set the address space to 10.0.0.0/16.
 6. Add subnets:
    - app-subnet: 10.0.1.0/24
@@ -93,21 +93,21 @@ This project should use a private network for production readiness.
 
 ```bash
 az network vnet create \
-  --resource-group soundwave-rg \
-  --name soundwave-vnet \
+  --resource-group swarity-rg \
+  --name swarity-vnet \
   --address-prefix 10.0.0.0/16 \
   --subnet-name app-subnet \
   --subnet-prefix 10.0.1.0/24
 
 az network vnet subnet create \
-  --resource-group soundwave-rg \
-  --vnet-name soundwave-vnet \
+  --resource-group swarity-rg \
+  --vnet-name swarity-vnet \
   --name func-subnet \
   --address-prefix 10.0.2.0/24
 
 az network vnet subnet create \
-  --resource-group soundwave-rg \
-  --vnet-name soundwave-vnet \
+  --resource-group swarity-rg \
+  --vnet-name swarity-vnet \
   --name private-subnet \
   --address-prefix 10.0.3.0/24
 ```
@@ -117,15 +117,15 @@ az network vnet subnet create \
 ### Azure Portal GUI Steps
 1. Search for Network security groups in the portal.
 2. Click Create.
-3. Name it soundwave-nsg.
+3. Name it swarity-nsg.
 4. Choose the same resource group.
 5. Click Review + create.
 6. After creation, go to Inbound security rules and add rules for HTTPS/HTTP as needed.
 
 ```bash
 az network nsg create \
-  --resource-group soundwave-rg \
-  --name soundwave-nsg
+  --resource-group swarity-rg \
+  --name swarity-nsg
 ```
 
 ### Route Table (UDR)
@@ -133,14 +133,14 @@ az network nsg create \
 ### Azure Portal GUI Steps
 1. Search for Route tables.
 2. Click Create.
-3. Name it soundwave-udr.
+3. Name it swarity-udr.
 4. Select the resource group.
 5. Add a route pointing to the firewall or next hop appliance.
 
 ```bash
 az network route-table create \
-  --resource-group soundwave-rg \
-  --name soundwave-udr
+  --resource-group swarity-rg \
+  --name swarity-udr
 ```
 
 ### Azure Firewall
@@ -154,8 +154,8 @@ az network route-table create \
 
 ```bash
 az network firewall create \
-  --resource-group soundwave-rg \
-  --name soundwave-firewall \
+  --resource-group swarity-rg \
+  --name swarity-firewall \
   --location eastus \
   --sku AZFW_VNet
 ```
@@ -167,8 +167,8 @@ az network firewall create \
 ### Azure Portal GUI Steps
 1. In the portal, search for App Services.
 2. Click Create.
-3. Choose the resource group soundwave-rg.
-4. Enter a unique app name such as soundwave-app.
+3. Choose the resource group swarity-rg.
+4. Enter a unique app name such as swarity-app.
 5. Select a paid plan such as P1v2.
 6. Choose Node.js 18 LTS runtime.
 7. Click Review + create.
@@ -177,22 +177,22 @@ Use a paid App Service plan for production features such as deployment slots, au
 
 ```bash
 az appservice plan create \
-  --name soundwave-plan \
-  --resource-group soundwave-rg \
+  --name swarity-plan \
+  --resource-group swarity-rg \
   --sku P1v2 \
   --is-linux
 
 az webapp create \
-  --resource-group soundwave-rg \
-  --plan soundwave-plan \
-  --name soundwave-app \
+  --resource-group swarity-rg \
+  --plan swarity-plan \
+  --name swarity-app \
   --runtime "NODE|18-lts"
 ```
 
 ### Enable HTTPS Only
 
 ```bash
-az webapp update --resource-group soundwave-rg --name soundwave-app --https-only true
+az webapp update --resource-group swarity-rg --name swarity-app --https-only true
 ```
 
 ### Enable VNet Integration
@@ -201,14 +201,14 @@ az webapp update --resource-group soundwave-rg --name soundwave-app --https-only
 1. Open the App Service.
 2. Go to Networking.
 3. Under VNet integration, click Add VNet.
-4. Select soundwave-vnet and app-subnet.
+4. Select swarity-vnet and app-subnet.
 5. Save the change.
 
 ```bash
 az webapp vnet-integration add \
-  --resource-group soundwave-rg \
-  --name soundwave-app \
-  --vnet soundwave-vnet \
+  --resource-group swarity-rg \
+  --name swarity-app \
+  --vnet swarity-vnet \
   --subnet app-subnet
 ```
 
@@ -225,8 +225,8 @@ For this project, add a simple health endpoint such as `/health` or `/health.htm
 
 ```bash
 az webapp config set \
-  --resource-group soundwave-rg \
-  --name soundwave-app \
+  --resource-group swarity-rg \
+  --name swarity-app \
   --generic-configurations '{"healthCheckPath":"/health"}'
 ```
 
@@ -237,7 +237,7 @@ az webapp config set \
 ### Azure Portal GUI Steps
 1. Search for Managed Identities.
 2. Click Create.
-3. Name it soundwave-identity.
+3. Name it swarity-identity.
 4. Select the resource group and region.
 5. Click Review + create.
 
@@ -245,8 +245,8 @@ az webapp config set \
 
 ```bash
 az identity create \
-  --resource-group soundwave-rg \
-  --name soundwave-identity
+  --resource-group swarity-rg \
+  --name swarity-identity
 ```
 
 ### Create Key Vault
@@ -255,14 +255,14 @@ az identity create \
 1. Search for Key Vaults.
 2. Click Create.
 3. Choose the resource group.
-4. Enter a unique name such as soundwave-kv-<unique>.
+4. Enter a unique name such as swarity-kv-<unique>.
 5. Select Standard SKU.
 6. Click Review + create.
 
 ```bash
 az keyvault create \
-  --resource-group soundwave-rg \
-  --name soundwave-kv-<unique> \
+  --resource-group swarity-rg \
+  --name swarity-kv-<unique> \
   --location eastus \
   --sku standard
 ```
@@ -278,7 +278,7 @@ az keyvault create \
 
 ```bash
 az keyvault set-policy \
-  --name soundwave-kv-<unique> \
+  --name swarity-kv-<unique> \
   --object-id <managed-identity-principal-id> \
   --secret-permissions get list \
   --key-permissions get list \
@@ -291,9 +291,9 @@ Use Key Vault references in App Service app settings where possible.
 
 ```bash
 az webapp config appsettings set \
-  --resource-group soundwave-rg \
-  --name soundwave-app \
-  --settings "KEY_VAULT_URI=https://soundwave-kv-<unique>.vault.azure.net/"
+  --resource-group swarity-rg \
+  --name swarity-app \
+  --settings "KEY_VAULT_URI=https://swarity-kv-<unique>.vault.azure.net/"
 ```
 
 ---
@@ -312,9 +312,9 @@ If you later add an API for login, playlists, or user data, deploy Azure Functio
 
 ```bash
 az functionapp create \
-  --resource-group soundwave-rg \
-  --plan soundwave-plan \
-  --name soundwave-func \
+  --resource-group swarity-rg \
+  --plan swarity-plan \
+  --name swarity-func \
   --runtime node --runtime-version 18 \
   --functions-version 4
 ```
@@ -323,9 +323,9 @@ Assign the same managed identity and connect the function app to the VNet.
 
 ```bash
 az webapp vnet-integration add \
-  --resource-group soundwave-rg \
-  --name soundwave-func \
-  --vnet soundwave-vnet \
+  --resource-group swarity-rg \
+  --name swarity-func \
+  --vnet swarity-vnet \
   --subnet func-subnet
 ```
 
@@ -344,8 +344,8 @@ Deployment slots allow safer release testing.
 
 ```bash
 az webapp deployment slot create \
-  --resource-group soundwave-rg \
-  --name soundwave-app \
+  --resource-group swarity-rg \
+  --name swarity-app \
   --slot staging
 ```
 
@@ -353,8 +353,8 @@ Deploy to staging first, test, then swap:
 
 ```bash
 az webapp deployment slot swap \
-  --resource-group soundwave-rg \
-  --name soundwave-app \
+  --resource-group swarity-rg \
+  --name swarity-app \
   --slot staging
 ```
 
@@ -371,10 +371,10 @@ az webapp deployment slot swap \
 
 ```bash
 az monitor autoscale create \
-  --resource-group soundwave-rg \
-  --resource soundwave-plan \
+  --resource-group swarity-rg \
+  --resource swarity-plan \
   --resource-type Microsoft.Web/serverfarms \
-  --name soundwave-autoscale \
+  --name swarity-autoscale \
   --min-count 2 \
   --max-count 5 \
   --count 2
@@ -390,15 +390,15 @@ Recommended rule: scale up when CPU is above 70% for 5 minutes.
 1. Search for Application Insights.
 2. Click Create.
 3. Choose the resource group.
-4. Name the resource soundwave-ai.
+4. Name the resource swarity-ai.
 5. Select the same region.
 6. Click Review + create.
 
 ```bash
 az monitor app-insights component create \
-  --app soundwave-ai \
+  --app swarity-ai \
   --location eastus \
-  --resource-group soundwave-rg \
+  --resource-group swarity-rg \
   --kind web
 ```
 
@@ -406,8 +406,8 @@ Link the app to Application Insights:
 
 ```bash
 az webapp config appsettings set \
-  --resource-group soundwave-rg \
-  --name soundwave-app \
+  --resource-group swarity-rg \
+  --name swarity-app \
   --settings \
   APPLICATIONINSIGHTS_CONNECTION_STRING="<connection-string>" \
   ApplicationInsightsAgent_EXTENSION_VERSION="~3"
@@ -417,8 +417,8 @@ Enable diagnostics logs to Log Analytics.
 
 ```bash
 az monitor log-analytics workspace create \
-  --resource-group soundwave-rg \
-  --workspace-name soundwave-law \
+  --resource-group swarity-rg \
+  --workspace-name swarity-law \
   --location eastus
 ```
 
@@ -438,27 +438,27 @@ Private endpoints secure access to Key Vault and optional storage/account servic
 
 ```bash
 az network private-endpoint create \
-  --name soundwave-kv-pe \
-  --resource-group soundwave-rg \
-  --vnet-name soundwave-vnet \
+  --name swarity-kv-pe \
+  --resource-group swarity-rg \
+  --vnet-name swarity-vnet \
   --subnet private-subnet \
   --private-connection-resource-id <key-vault-resource-id> \
   --group-id vault \
-  --connection-name soundwave-kv-conn
+  --connection-name swarity-kv-conn
 ```
 
 Create and link a private DNS zone:
 
 ```bash
 az network private-dns zone create \
-  --resource-group soundwave-rg \
+  --resource-group swarity-rg \
   --name privatelink.vaultcore.azure.net
 
 az network private-dns link vnet create \
-  --resource-group soundwave-rg \
+  --resource-group swarity-rg \
   --zone-name privatelink.vaultcore.azure.net \
-  --name soundwave-vnet-link \
-  --virtual-network soundwave-vnet \
+  --name swarity-vnet-link \
+  --virtual-network swarity-vnet \
   --registration-enabled false
 ```
 
@@ -477,8 +477,8 @@ Use a custom domain and certificate for production.
 
 ```bash
 az webapp config ssl upload \
-  --resource-group soundwave-rg \
-  --name soundwave-app \
+  --resource-group swarity-rg \
+  --name swarity-app \
   --certificate-file cert.pfx \
   --certificate-password <certificate-password>
 ```
@@ -487,8 +487,8 @@ Bind with SNI:
 
 ```bash
 az webapp config ssl bind \
-  --resource-group soundwave-rg \
-  --name soundwave-app \
+  --resource-group swarity-rg \
+  --name swarity-app \
   --certificate-thumbprint <thumbprint> \
   --ssl-type SNI
 ```
@@ -497,8 +497,8 @@ Validate TLS settings:
 
 ```bash
 az webapp config show \
-  --resource-group soundwave-rg \
-  --name soundwave-app \
+  --resource-group swarity-rg \
+  --name swarity-app \
   --query "siteConfig.minTlsVersion"
 ```
 
@@ -517,10 +517,10 @@ If Azure Functions or future APIs are used, place them behind APIM.
 
 ```bash
 az apim create \
-  --name soundwave-apim \
-  --resource-group soundwave-rg \
-  --publisher-name "SoundWave" \
-  --publisher-email "admin@soundwave.com" \
+  --name swarity-apim \
+  --resource-group swarity-rg \
+  --publisher-name "Swarity" \
+  --publisher-email "admin@Swarity.com" \
   --sku Premium \
   --virtual-network-type Internal
 ```
@@ -535,22 +535,22 @@ For this static frontend project, deploy the current website files to the App Se
 
 ```bash
 cd /path/to/project
-zip -r soundwave-app.zip . -x "*.git*" "*.env*"
+zip -r swarity-app.zip . -x "*.git*" "*.env*"
 
 az webapp deployment source config-zip \
-  --resource-group soundwave-rg \
-  --name soundwave-app \
-  --src soundwave-app.zip
+  --resource-group swarity-rg \
+  --name swarity-app \
+  --src swarity-app.zip
 ```
 
 For staging:
 
 ```bash
 az webapp deployment source config-zip \
-  --resource-group soundwave-rg \
-  --name soundwave-app \
+  --resource-group swarity-rg \
+  --name swarity-app \
   --slot staging \
-  --src soundwave-app.zip
+  --src swarity-app.zip
 ```
 
 ---
@@ -587,3 +587,4 @@ Because this current project is a frontend-only static website, the most importa
 7. Private endpoints and private DNS for future secure backends
 
 If later you add login, database access, or API endpoints, Azure Functions + APIM + Key Vault integration will be the next best upgrade path.
+

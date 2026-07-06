@@ -48,7 +48,7 @@
         const params = new URLSearchParams({
             part: 'snippet',
             chart: 'mostPopular',
-            regionCode: 'US',
+            regionCode: 'IN',
             videoCategoryId: '10', // Music
             maxResults: String(MAX),
             key: API_KEY

@@ -1,4 +1,4 @@
-# Music Hub Project - Design Redesign Summary
+# Swarity Project - Design Redesign Summary
 
 ## Overview
 Your `index.html` has been completely redesigned to match modern music streaming platforms like Spotify, Gaana, JioSaavn, and Wynk Music.
@@ -160,3 +160,4 @@ Your `index.html` has been completely redesigned to match modern music streaming
 3. Accessibility testing with screen readers
 4. Performance testing with Lighthouse
 5. Cross-browser testing at different viewport sizes
+
