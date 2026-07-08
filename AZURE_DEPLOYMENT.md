@@ -250,7 +250,15 @@ Portal steps:
 2. Zip deploy the static site.
 3. Enable HTTPS-only.
 
-CLI commands:
+#### Recommended CLI ZIP deploy
+Run this from PowerShell where the ZIP file exists:
+
+```bash
+az login
+```
+
+Create the App Service plan and app if needed:
+
 ```bash
 az appservice plan create \
   --name swarity-plan \
@@ -262,26 +270,87 @@ az webapp create \
   --resource-group swarity-rg \
   --plan swarity-plan \
   --name swarity-app \
-  --runtime "NODE|18-lts"
+  --runtime "NODE|24-lts"
+```
 
-zip -r swarity-frontend.zip . -x "*.git*" "*.env*"
-az webapp deployment source config-zip \
+Create a ZIP package containing only the site files at the archive root:
+
+```bash
+zip -r swarity-frontend.zip . \
+  -x "*.git*" "*.env*" "node_modules/*" "functions/*" "infra/*" "scripts/*" "tests/*"
+```
+
+The ZIP should contain `index.html`, CSS, JS, assets, and any static folders directly at the root.
+It should not contain an extra parent folder such as `swarity-frontend/`.
+
+Deploy the ZIP to the existing App Service:
+
+```bash
+az webapp deploy \
   --resource-group swarity-rg \
   --name swarity-app \
-  --src swarity-frontend.zip
+  --src-path "C:\Users\yoge1426\Downloads\swarity-frontend.zip" \
+  --type zip
+```
 
+After deployment, browse:
+
+```text
+https://swarity-app.azurewebsites.net
+```
+
+If your site is a built frontend (React/Vite) and the build output is in `dist` or `build`, zip the contents of that folder instead of the project root:
+
+```powershell
+cd dist
+Compress-Archive -Path * -DestinationPath ..\swarity-frontend.zip -Force
+```
+
+or
+
+```powershell
+cd build
+Compress-Archive -Path * -DestinationPath ..\swarity-frontend.zip -Force
+```
+
+#### Optional portal deployment via Kudu
+If you prefer the portal, use Kudu Advanced Tools:
+
+1. Open Azure Portal.
+2. Go to App Services.
+3. Select your App Service.
+4. In the left menu, open **Development Tools**.
+5. Select **Advanced Tools**.
+6. Click **Go**.
+7. In the Kudu tab, open:
+
+```text
+https://<your-app-service-name>.scm.azurewebsites.net/ZipDeployUI
+```
+
+8. Drag and drop `swarity-frontend.zip`.
+9. Wait until deployment completes.
+10. Open the site URL.
+
+#### Enable HTTPS-only
+In the portal, use the current path:
+
+1. Open Azure Portal.
+2. Go to App Services.
+3. Select your App Service.
+4. In the left menu, select **Settings** > **Configuration**.
+5. Open **General settings**.
+6. Under **Platform settings**, set **HTTPS Only** to **On**.
+7. Click **Save**.
+
+Or use the CLI:
+
+```bash
 az webapp update \
   --resource-group swarity-rg \
   --name swarity-app \
   --https-only true
 ```
-
-Portal steps:
-- App Service > Create > select `swarity-rg`.
-- Choose a unique app name.
-- Use Node 18 runtime.
-- Deployment Center > Zip Deploy.
-- TLS/SSL settings > HTTPS Only.
 
 ### Phase 3: Add API Management and Key Vault integration
 1. Create an Azure Key Vault and add secrets:
