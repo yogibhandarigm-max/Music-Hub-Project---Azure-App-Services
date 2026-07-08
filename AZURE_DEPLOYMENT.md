@@ -654,7 +654,7 @@ Pipeline steps:
 - Deploy infrastructure template.
 - Run end-to-end smoke tests.
 
-### GitHub OIDC setup for Azure deployment
+### GitHub service principal setup for Azure deployment
 1. In the Azure portal, go to Microsoft Entra ID.
 2. Select App registrations.
 3. Click + New registration.
@@ -663,13 +663,11 @@ Pipeline steps:
    - Redirect URI: leave blank
 4. Click Register.
 5. Copy the Application (client) ID and Directory (tenant) ID.
-6. In the App Registration, go to Federated credentials.
-7. Click Add a federated credential.
-   - Credential name: `github-actions-oidc`
-   - Issuer: `https://token.actions.githubusercontent.com`
-   - Subject: `repo:<org>/<repo>:ref:refs/heads/main`
-   - Audience: `api://AzureADTokenExchange`
-8. Save the federated credential.
+6. In the App Registration, go to Certificates & secrets.
+7. Click + New client secret.
+   - Description: `github-actions-sp-secret`
+   - Expires: 12 months or 24 months
+8. Copy the secret value immediately; you will not be able to retrieve it later.
 9. Assign RBAC permissions for the app registration:
    - Go to Subscriptions > select your subscription
    - Click Access control (IAM)
@@ -682,14 +680,13 @@ Pipeline steps:
     - `AZURE_TENANT_ID`
     - `AZURE_SUBSCRIPTION_ID`
     - `AZURE_CLIENT_ID`
+    - `AZURE_CLIENT_SECRET`
     - `AZURE_RESOURCE_GROUP`
     - `AZURE_APP_NAME`
     - `AZURE_FUNCTIONAPP_NAME`
-    - `AZURE_CREDENTIALS` (optional fallback)
+    - `AZURE_CREDENTIALS`
 
-Optional fallback:
-- If OIDC is not yet ready, use `AZURE_CREDENTIALS` as a service principal JSON secret temporarily.
-- Prefer OIDC for short-lived credentials and to avoid long-lived secret management.
+The current workflow uses `AZURE_CREDENTIALS` for Azure login. If you want to keep the service principal login consistent with the workflow, store the JSON output below in the GitHub secret `AZURE_CREDENTIALS`.
 
 Generate `AZURE_CREDENTIALS` with Azure CLI:
 ```bash
@@ -699,6 +696,9 @@ az ad sp create-for-rbac \
   --scopes /subscriptions/<subscription-id> \
   --sdk-auth
 ```
+Copy the JSON output and save it as the GitHub secret `AZURE_CREDENTIALS`.
+
+If the workflow is later updated to support OIDC, you can remove `AZURE_CREDENTIALS` and use federated credentials instead.
 Copy the JSON output and save it as the GitHub secret `AZURE_CREDENTIALS`.
 
 ### Optional Phase 7: Add AKS and container support
