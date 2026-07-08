@@ -1,0 +1,18 @@
+checking 
+for (using) the Azure CLI. If you don't have it installed, you can download it from https://docs.microsoft.com/en-us/cli/azure/install-azure-cli.
+declare -a AZURE_CLI_COMMANDS=("az" "az login" "az account show")
+for cmd in "${AZURE_CLI_COMMANDS[@]}"; do
+    if ! command -v $cmd &> /dev/null; then
+        echo "Azure CLI command '$cmd' not found. Please install the Azure CLI."
+        exit 1
+    fi
+    done
+for (using) the Azure CLI. If you don't have it installed, you can download it from https://docs.microsoft.com/en-us/cli/azure/install-azure-cli.
+declare -a AZURE_CLI_COMMANDS=("az" "az login" "az account
+    show")
+for cmd in "${AZURE_CLI_COMMANDS[@]}"; do
+    if ! command -v $cmd &> /dev/null; then
+        echo "Azure CLI command '$cmd' not found. Please install the Azure CLI."
+        exit 1
+    fi
+done
