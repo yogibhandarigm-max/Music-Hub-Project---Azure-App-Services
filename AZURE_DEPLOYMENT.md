@@ -655,29 +655,41 @@ Pipeline steps:
 - Run end-to-end smoke tests.
 
 ### GitHub OIDC setup for Azure deployment
-1. In Azure AD, create an App Registration for GitHub Actions.
-2. Under "Expose an API", add an Application ID URI if needed.
-3. Under "Certificates & secrets", skip client secrets for OIDC.
-4. Under "Token configuration", add optional groups or roles if required.
-5. In GitHub, go to repository Settings > Security > OpenID Connect providers.
-6. Create a new federated credential:
+1. In the Azure portal, go to Microsoft Entra ID.
+2. Select App registrations.
+3. Click + New registration.
+   - Name: `github-actions-swarity`
+   - Supported account types: Accounts in this organizational directory only
+   - Redirect URI: leave blank
+4. Click Register.
+5. Copy the Application (client) ID and Directory (tenant) ID.
+6. In the App Registration, go to Federated credentials.
+7. Click Add a federated credential.
+   - Credential name: `github-actions-oidc`
    - Issuer: `https://token.actions.githubusercontent.com`
    - Subject: `repo:<org>/<repo>:ref:refs/heads/main`
    - Audience: `api://AzureADTokenExchange`
-7. Grant the app registration RBAC permissions on the target subscription or resource group:
-   - Contributor or a narrower custom role as needed.
-8. Add these secrets to GitHub:
-   - `AZURE_TENANT_ID`
-   - `AZURE_SUBSCRIPTION_ID`
-   - `AZURE_CLIENT_ID`
-   - `AZURE_RESOURCE_GROUP`
-   - `AZURE_APP_NAME`
-   - `AZURE_FUNCTIONAPP_NAME`
-   - `AZURE_CREDENTIALS` (optional fallback)
+8. Save the federated credential.
+9. Assign RBAC permissions for the app registration:
+   - Go to Subscriptions > select your subscription
+   - Click Access control (IAM)
+   - Click Add role assignment
+   - Role: Contributor (or a narrower custom role)
+   - Assign access to: User, group, or service principal
+   - Select the app registration by name
+   - Click Review + assign
+10. Add these GitHub repository secrets:
+    - `AZURE_TENANT_ID`
+    - `AZURE_SUBSCRIPTION_ID`
+    - `AZURE_CLIENT_ID`
+    - `AZURE_RESOURCE_GROUP`
+    - `AZURE_APP_NAME`
+    - `AZURE_FUNCTIONAPP_NAME`
+    - `AZURE_CREDENTIALS` (optional fallback)
 
 Optional fallback:
-- If OIDC is not yet ready, keep `AZURE_CREDENTIALS` as a service principal JSON secret and use it temporarily.
-- Prefer OIDC for short-lived credentials and fewer secret management requirements.
+- If OIDC is not yet ready, use `AZURE_CREDENTIALS` as a service principal JSON secret temporarily.
+- Prefer OIDC for short-lived credentials and to avoid long-lived secret management.
 
 Generate `AZURE_CREDENTIALS` with Azure CLI:
 ```bash
