@@ -17,19 +17,16 @@ jobs:
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
     steps:
       - uses: actions/checkout@v4
-      - name: Login to Azure with OIDC
-        if: ${{ env.AZURE_CLIENT_ID != '' && env.AZURE_TENANT_ID != '' && env.AZURE_SUBSCRIPTION_ID != '' }}
-        uses: azure/login@v1
-        with:
-          auth-type: oidc
-          client-id: ${{ env.AZURE_CLIENT_ID }}
-          tenant-id: ${{ env.AZURE_TENANT_ID }}
-          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
-      - name: Login to Azure with service principal fallback
-        if: ${{ env.AZURE_CLIENT_ID == '' || env.AZURE_TENANT_ID == '' || env.AZURE_SUBSCRIPTION_ID == '' }}
+      - name: Login to Azure using service principal
+        if: ${{ env.AZURE_CREDENTIALS != '' }}
         uses: azure/login@v1
         with:
           creds: ${{ env.AZURE_CREDENTIALS }}
+      - name: Fail if no Azure credentials are available
+        if: ${{ env.AZURE_CREDENTIALS == '' }}
+        run: |
+          echo "AZURE_CREDENTIALS is required for deployment."
+          exit 1
       - name: Build frontend package
         run: |
           zip -r swarity-frontend.zip . -x "*.git*" "*.env*" "node_modules/*" "functions/*" "infra/*" "scripts/*" "tests/*"
