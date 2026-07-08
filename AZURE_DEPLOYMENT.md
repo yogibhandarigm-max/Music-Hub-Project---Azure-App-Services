@@ -684,11 +684,16 @@ Pipeline steps:
     - `AZURE_RESOURCE_GROUP`
     - `AZURE_APP_NAME`
     - `AZURE_FUNCTIONAPP_NAME`
-    - `AZURE_CREDENTIALS`
+    - `AZURE_CREDENTIALS` (optional)
 
-The current workflow uses `AZURE_CREDENTIALS` for Azure login. If you want to keep the service principal login consistent with the workflow, store the JSON output below in the GitHub secret `AZURE_CREDENTIALS`.
+The workflow supports both of the following authentication options:
 
-Generate `AZURE_CREDENTIALS` with Azure CLI:
+- `AZURE_CREDENTIALS`: full service principal JSON for `azure/login@v1`
+- `AZURE_CLIENT_SECRET`: client secret plus `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_SUBSCRIPTION_ID`
+
+If `AZURE_CREDENTIALS` is not set, the workflow will generate the required service principal JSON at runtime from the other values.
+
+Generate `AZURE_CREDENTIALS` with Azure CLI if you prefer storing the JSON directly:
 ```bash
 az ad sp create-for-rbac \
   --name "github-actions-swarity" \
@@ -696,10 +701,10 @@ az ad sp create-for-rbac \
   --scopes /subscriptions/<subscription-id> \
   --sdk-auth
 ```
+
 Copy the JSON output and save it as the GitHub secret `AZURE_CREDENTIALS`.
 
 If the workflow is later updated to support OIDC, you can remove `AZURE_CREDENTIALS` and use federated credentials instead.
-Copy the JSON output and save it as the GitHub secret `AZURE_CREDENTIALS`.
 
 ### Optional Phase 7: Add AKS and container support
 - Build a `Dockerfile` for frontend or backend.

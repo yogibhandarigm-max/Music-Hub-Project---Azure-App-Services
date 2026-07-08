@@ -14,18 +14,37 @@ jobs:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
     steps:
       - uses: actions/checkout@v4
+      - name: Generate Azure credentials JSON from client secret
+        if: ${{ secrets.AZURE_CREDENTIALS == '' && secrets.AZURE_CLIENT_SECRET != '' }}
+        run: |
+          cat > azure-credentials.json <<EOF
+          {
+            "clientId": "${AZURE_CLIENT_ID}",
+            "clientSecret": "${AZURE_CLIENT_SECRET}",
+            "subscriptionId": "${AZURE_SUBSCRIPTION_ID}",
+            "tenantId": "${AZURE_TENANT_ID}",
+            "activeDirectoryEndpointUrl": "https://login.microsoftonline.com",
+            "resourceManagerEndpointUrl": "https://management.azure.com/",
+            "activeDirectoryGraphResourceId": "https://graph.windows.net/",
+            "sqlManagementEndpointUrl": "https://management.core.windows.net:8443/",
+            "galleryEndpointUrl": "https://gallery.azure.com/",
+            "managementEndpointUrl": "https://management.core.windows.net/"
+          }
+          EOF
+          echo "AZURE_CREDENTIALS=$(cat azure-credentials.json)" >> $GITHUB_ENV
       - name: Login to Azure using service principal
-        if: ${{ env.AZURE_CREDENTIALS != '' }}
+        if: ${{ secrets.AZURE_CREDENTIALS != '' || env.AZURE_CREDENTIALS != '' }}
         uses: azure/login@v1
         with:
           creds: ${{ env.AZURE_CREDENTIALS }}
       - name: Fail if no Azure credentials are available
-        if: ${{ env.AZURE_CREDENTIALS == '' }}
+        if: ${{ secrets.AZURE_CREDENTIALS == '' && secrets.AZURE_CLIENT_SECRET == '' }}
         run: |
-          echo "AZURE_CREDENTIALS is required for deployment."
+          echo "AZURE_CREDENTIALS or AZURE_CLIENT_SECRET is required for deployment."
           exit 1
       - name: Build frontend package
         run: |
