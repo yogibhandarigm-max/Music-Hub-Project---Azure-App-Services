@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Generate Azure credentials JSON from client secret
-        if: ${{ secrets.AZURE_CREDENTIALS == '' && secrets.AZURE_CLIENT_SECRET != '' }}
+        if: ${{ env.AZURE_CREDENTIALS == '' && env.AZURE_CLIENT_SECRET != '' }}
         run: |
           cat > azure-credentials.json <<EOF
           {
@@ -37,12 +37,12 @@ jobs:
           EOF
           echo "AZURE_CREDENTIALS=$(cat azure-credentials.json)" >> $GITHUB_ENV
       - name: Login to Azure using service principal
-        if: ${{ secrets.AZURE_CREDENTIALS != '' || env.AZURE_CREDENTIALS != '' }}
+        if: ${{ env.AZURE_CREDENTIALS != '' }}
         uses: azure/login@v1
         with:
           creds: ${{ env.AZURE_CREDENTIALS }}
       - name: Fail if no Azure credentials are available
-        if: ${{ secrets.AZURE_CREDENTIALS == '' && secrets.AZURE_CLIENT_SECRET == '' }}
+        if: ${{ env.AZURE_CREDENTIALS == '' && env.AZURE_CLIENT_SECRET == '' }}
         run: |
           echo "AZURE_CREDENTIALS or AZURE_CLIENT_SECRET is required for deployment."
           exit 1
