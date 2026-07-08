@@ -16,6 +16,9 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+      AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+      AZURE_APP_NAME: ${{ secrets.AZURE_APP_NAME }}
+      AZURE_FUNCTIONAPP_NAME: ${{ secrets.AZURE_FUNCTIONAPP_NAME }}
     steps:
       - uses: actions/checkout@v4
       - name: Generate Azure credentials JSON from client secret
@@ -55,17 +58,27 @@ jobs:
           zip -r swarity-frontend.zip . -x "*.git*" "*.env*" "node_modules/*" "functions/*" "infra/*" "scripts/*" "tests/*"
       - name: Deploy frontend to App Service
         run: |
+          if [ -z "$AZURE_RESOURCE_GROUP" ] || [ -z "$AZURE_APP_NAME" ]; then
+            echo "Missing AZURE_RESOURCE_GROUP or AZURE_APP_NAME"
+            exit 1
+          fi
+
           az webapp deployment source config-zip \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --name ${{ secrets.AZURE_APP_NAME }} \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$AZURE_APP_NAME" \
             --src swarity-frontend.zip
       - name: Deploy Functions app code
         run: |
+          if [ -z "$AZURE_RESOURCE_GROUP" ] || [ -z "$AZURE_FUNCTIONAPP_NAME" ]; then
+            echo "Missing AZURE_RESOURCE_GROUP or AZURE_FUNCTIONAPP_NAME"
+            exit 1
+          fi
+
           cd functions
           zip -r ../swarity-functions.zip . -x "node_modules/*"
           az functionapp deployment source config-zip \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --name ${{ secrets.AZURE_FUNCTIONAPP_NAME }} \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$AZURE_FUNCTIONAPP_NAME" \
             --src ../swarity-functions.zip
       - name: Deploy infrastructure Bicep
         run: |
